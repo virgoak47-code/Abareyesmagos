@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#b53621">
-<title>Reyes Magos · Estrategia de Precios</title>
+<title>Reyes Magos · Estrategia de Precios v2</title>
 <style>
 :root{
   --bg:#171411;--panel:#241e19;--panel2:#2d251f;--line:#473a30;
@@ -316,4 +316,4 @@ async function lookupExternal(){
       const ct=(p.categories_tags||[]).find(x=>x.startsWith('en:')||x.startsWith('es:'))||'';
       if(/drink|beverage|bebida|refresco|soda/i.test(ct))$('fCategory').value='Bebidas';
       else if(/snack|botana|chips/i.test(ct))$('fCategory').value='Botanas';
-      $('lookupMsg').innerHTML='🟢 Producto encontrado. <b>No 
+      $('lookupMsg').innerHTML='🟢 Producto encontrado. <b>
