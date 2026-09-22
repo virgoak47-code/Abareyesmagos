@@ -258,22 +258,52 @@
     text-align: center; color: #fff; font-size: 13px; padding: 10px 20px;
     opacity: 0.8;
   }
+  @media print {
+    body * { visibility: hidden; }
+    #ticketContenido, #ticketContenido * { visibility: visible; }
+    #ticketContenido { position: absolute; top: 0; left: 0; width: 100%; font-size: 14px; }
+  }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Los Reyes Magos</h1>
-  <p>Punto de venta — Abarrotes &amp; Papelería</p>
+  <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+    <div>
+      <h1>Los Reyes Magos</h1>
+      <p>Punto de venta — Abarrotes &amp; Papelería</p>
+    </div>
+    <button id="btnRol" onclick="abrirCambioRol()" style="background:rgba(255,255,255,0.18); color:#fff; border:none; border-radius:999px; padding:6px 12px; font-size:12px; font-weight:700; white-space:nowrap;">👤 Dueño</button>
+  </div>
 </header>
 
 <nav id="tabs">
   <button data-view="vender" class="active">Vender</button>
-  <button data-view="productos">Productos</button>
-  <button data-view="compras">Recibir compra</button>
-  <button data-view="caja">Corte de caja</button>
-  <button data-view="reportes">Reportes</button>
+  <button data-view="productos" data-solo-dueno="1">Productos</button>
+  <button data-view="compras" data-solo-dueno="1">Recibir compra</button>
+  <button data-view="caja" data-solo-dueno="1">Corte de caja</button>
+  <button data-view="reportes" data-solo-dueno="1">Reportes</button>
+  <button data-view="fiado">Fiado</button>
+  <button data-view="ajustes" data-solo-dueno="1">Ajustes</button>
 </nav>
+
+<div class="scan-overlay" id="rolOverlay">
+  <div class="scan-header">
+    <h3>Cambiar de modo</h3>
+    <button onclick="cerrarCambioRol()">✕</button>
+  </div>
+  <div style="padding:20px; max-width:400px; margin:0 auto; width:100%;">
+    <div id="rolAEmpleado">
+      <p style="color:#fff; font-size:13.5px;">Vas a pasar a modo empleado: solo se verán "Vender" y "Fiado".</p>
+      <button class="btn btn-primary" onclick="cambiarRol('empleado')">Cambiar a modo empleado</button>
+    </div>
+    <div id="rolAPin" style="display:none;">
+      <label style="color:#fff;">PIN de dueño</label>
+      <input id="rolPinInput" type="password" inputmode="numeric" placeholder="****">
+      <button class="btn btn-primary" onclick="intentarVolverDueno()">Entrar como dueño</button>
+    </div>
+  </div>
+</div>
 
 <main>
 
@@ -300,7 +330,47 @@
         <button class="btn btn-secondary" onclick="cobrar('tarjeta')">Tarjeta</button>
       </div>
       <button class="btn btn-secondary" onclick="cobrar('transferencia')">Transferencia</button>
+      <label for="pagoCliente" style="margin-top:14px;">Nombre del cliente (solo necesario para fiado)</label>
+      <input id="pagoCliente" placeholder="Ej. Don Chuy">
+      <button class="btn" style="background:var(--amber-soft); color:var(--amber); margin-top:8px;" onclick="cobrar('fiado')">Fiado (a crédito)</button>
       <button class="btn btn-outline" onclick="cerrarPago()">Cancelar</button>
+    </div>
+
+    <div class="card" id="ticketCard" style="display:none;">
+      <h2>Venta registrada ✅</h2>
+      <div id="ticketContenido" style="font-size:13.5px; line-height:1.6;"></div>
+      <a class="btn btn-secondary" id="ticketWhatsapp" href="#" target="_blank" style="text-decoration:none; text-align:center;">Compartir por WhatsApp</a>
+      <button class="btn btn-outline" onclick="imprimirTicket()">Imprimir</button>
+      <button class="btn btn-primary" onclick="cerrarTicket()">Nueva venta</button>
+    </div>
+  </section>
+
+  <!-- FIADO -->
+  <section class="view" id="view-fiado">
+    <div class="card">
+      <h2>Cuentas por cobrar</h2>
+      <div class="kv"><span class="label">Total pendiente</span><span id="fiadoTotalPendiente" style="font-weight:800; font-size:17px;">$0.00</span></div>
+    </div>
+    <div class="card">
+      <h2>Por cliente</h2>
+      <div class="prod-list" id="fiadoLista"></div>
+      <div class="empty" id="fiadoVacio">No hay ventas a crédito pendientes</div>
+    </div>
+  </section>
+
+  <!-- AJUSTES -->
+  <section class="view" id="view-ajustes">
+    <div class="card">
+      <h2>Modo empleado</h2>
+      <div class="hint">Cuando alguien más atienda la tienda, cambia a modo empleado: solo verá "Vender" y "Fiado", sin acceso a precios, reportes ni corte de caja.</div>
+      <button class="btn btn-secondary" onclick="abrirCambioRol()">Cambiar a modo empleado</button>
+    </div>
+    <div class="card">
+      <h2>PIN de dueño</h2>
+      <div class="hint">Se usa para volver a modo dueño desde modo empleado.</div>
+      <label for="pinNuevo">Nuevo PIN (4 dígitos)</label>
+      <input id="pinNuevo" type="password" inputmode="numeric" maxlength="4" placeholder="****">
+      <button class="btn btn-primary" onclick="cambiarPin()">Guardar PIN</button>
     </div>
   </section>
 
@@ -350,6 +420,7 @@
       <label for="pBarras">Código de barras de fábrica (opcional)</label>
       <input id="pBarras" placeholder="Escanea o escribe el código del empaque">
       <button class="scan-btn" onclick="abrirEscaner('pBarras')">📷 Escanear con la cámara</button>
+      <button class="scan-btn" style="background:var(--gold-soft); color:var(--gold);" onclick="buscarCatalogoProducto()">🔎 Buscar en catálogo (autocompletar nombre)</button>
       <label for="pEstrategia">Tipo de estrategia</label>
       <select id="pEstrategia">
         <option value="normal">Normal</option>
@@ -472,7 +543,9 @@ function estadoInicial() {
     ventas: [],           // ventas sin cortar (se vacía al hacer corte): {id, fecha, items, total, pago}
     historial: [],         // todas las ventas de siempre, para reportes: mismo formato que ventas
     compras: [],           // {id, fecha, productoId, nombre, cantidad, costo}
-    cortes: []
+    creditos: [],           // ventas fiadas: {id, ventaId, cliente, monto, fecha, pagado}
+    cortes: [],
+    config: { pin: "1234", rolActual: "dueno" }
   };
 }
 
@@ -520,7 +593,107 @@ document.getElementById("tabs").addEventListener("click", (e) => {
   if (btn.dataset.view === "caja") renderCaja();
   if (btn.dataset.view === "compras") renderCompras();
   if (btn.dataset.view === "reportes") renderReportes();
+  if (btn.dataset.view === "fiado") renderFiado();
 });
+
+/* ---------- Roles (dueño / empleado) ---------- */
+function aplicarRol() {
+  const esDueno = state.config.rolActual !== "empleado";
+  document.querySelectorAll('#tabs button[data-solo-dueno]').forEach(b => {
+    b.style.display = esDueno ? "" : "none";
+  });
+  document.getElementById("btnRol").textContent = esDueno ? "👤 Dueño" : "🔒 Empleado";
+  if (!esDueno) {
+    // si el rol cambia estando en una vista solo de dueño, regresa a Vender
+    const activo = document.querySelector(".view.active");
+    if (activo && activo.id !== "view-vender" && activo.id !== "view-fiado") {
+      document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+      document.querySelector('nav button[data-view="vender"]').classList.add("active");
+      document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+      document.getElementById("view-vender").classList.add("active");
+    }
+  }
+}
+
+function abrirCambioRol() {
+  document.getElementById("rolOverlay").classList.add("open");
+  const esDueno = state.config.rolActual !== "empleado";
+  document.getElementById("rolAEmpleado").style.display = esDueno ? "block" : "none";
+  document.getElementById("rolAPin").style.display = esDueno ? "none" : "block";
+  document.getElementById("rolPinInput").value = "";
+}
+
+function cerrarCambioRol() {
+  document.getElementById("rolOverlay").classList.remove("open");
+}
+
+function cambiarRol(rol) {
+  state.config.rolActual = rol;
+  guardar();
+  aplicarRol();
+  cerrarCambioRol();
+  mostrarToast(rol === "empleado" ? "Modo empleado activado" : "Modo dueño activado");
+}
+
+function intentarVolverDueno() {
+  const pin = document.getElementById("rolPinInput").value.trim();
+  if (pin === state.config.pin) {
+    cambiarRol("dueno");
+  } else {
+    mostrarToast("PIN incorrecto");
+  }
+}
+
+function cambiarPin() {
+  const nuevo = document.getElementById("pinNuevo").value.trim();
+  if (!/^\d{4}$/.test(nuevo)) { mostrarToast("El PIN debe ser de 4 dígitos"); return; }
+  state.config.pin = nuevo;
+  guardar();
+  document.getElementById("pinNuevo").value = "";
+  mostrarToast("PIN actualizado");
+}
+
+function irADarDeAlta(codigo, nombre) {
+  document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+  document.querySelector('nav button[data-view="productos"]').classList.add("active");
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  document.getElementById("view-productos").classList.add("active");
+  document.getElementById("pBarras").value = codigo;
+  document.getElementById("pNombre").value = nombre;
+  document.getElementById("pNombre").scrollIntoView({ behavior: "smooth", block: "center" });
+  mostrarToast("Completa precio y stock para guardarlo");
+}
+
+/* ---------- Catálogo externo (Open Food Facts) ---------- */
+async function buscarOpenFoodFacts(codigo) {
+  try {
+    const resp = await fetch("https://world.openfoodfacts.org/api/v2/product/" + encodeURIComponent(codigo) + ".json");
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    if (data.status === 1 && data.product) {
+      const nombre = data.product.product_name_es || data.product.product_name || "";
+      const marca = data.product.brands || "";
+      if (!nombre) return null;
+      return { nombre, marca };
+    }
+  } catch (e) {
+    console.error("No se pudo consultar el catálogo externo", e);
+  }
+  return null;
+}
+
+async function buscarCatalogoProducto() {
+  const codigo = document.getElementById("pBarras").value.trim();
+  if (!codigo) { mostrarToast("Escanea o escribe un código primero"); return; }
+  mostrarToast("Buscando en el catálogo...");
+  const info = await buscarOpenFoodFacts(codigo);
+  if (info) {
+    document.getElementById("pNombre").value = info.marca ? (info.nombre + " - " + info.marca) : info.nombre;
+    mostrarToast("Encontrado — revisa el nombre antes de guardar");
+  } else {
+    mostrarToast("No apareció en el catálogo, captúralo manual");
+  }
+}
 
 /* ---------- Productos ---------- */
 function guardarProducto() {
@@ -758,34 +931,158 @@ function cerrarPago() {
 
 function cobrar(pago) {
   const total = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
+  const cliente = document.getElementById("pagoCliente").value.trim();
+
+  if (pago === "fiado" && !cliente) {
+    mostrarToast("Escribe el nombre del cliente para registrar el fiado");
+    return;
+  }
+
   // descuenta stock y toma el costo actual de cada producto para la venta
   const items = carrito.map(i => {
     const prod = state.productos.find(p => p.id === i.id);
     if (prod) prod.stock = Math.max(0, (prod.stock || 0) - i.cantidad);
     return { id: i.id, nombre: i.nombre, cantidad: i.cantidad, precio: i.precio, costo: (prod && prod.costo) || 0 };
   });
-  const venta = { id: crypto.randomUUID(), fecha: new Date().toISOString(), items, total, pago };
-  state.ventas.push(venta);
+  const venta = { id: crypto.randomUUID(), fecha: new Date().toISOString(), items, total, pago, cliente: cliente || null };
+
+  // el historial cuenta la venta siempre (para reportes/ganancia); "ventas" (corte de caja)
+  // solo recibe el dinero que realmente entró — el fiado se registra aparte en "creditos"
   state.historial.push(venta);
+  if (pago === "fiado") {
+    state.creditos.push({ id: crypto.randomUUID(), ventaId: venta.id, cliente, monto: total, fecha: venta.fecha, pagado: false });
+  } else {
+    state.ventas.push(venta);
+  }
   guardar();
+
+  mostrarTicket(venta);
   carrito = [];
   renderCarrito();
   cerrarPago();
-  mostrarToast("Venta registrada — " + moneda(total));
+  document.getElementById("pagoCliente").value = "";
+}
+
+/* ---------- Ticket ---------- */
+function mostrarTicket(venta) {
+  const fecha = new Date(venta.fecha).toLocaleString("es-MX");
+  const filas = venta.items.map(i =>
+    `${i.cantidad} x ${i.nombre} — ${moneda(i.precio * i.cantidad)}`
+  ).join("<br>");
+  const metodoLabel = { efectivo: "Efectivo", tarjeta: "Tarjeta", transferencia: "Transferencia", fiado: "Fiado — " + venta.cliente }[venta.pago] || venta.pago;
+
+  document.getElementById("ticketContenido").innerHTML = `
+    <strong>Los Reyes Magos</strong><br>
+    ${fecha}<br><br>
+    ${filas}<br><br>
+    <strong>Total: ${moneda(venta.total)}</strong><br>
+    Pago: ${metodoLabel}
+  `;
+
+  const textoWhatsapp = encodeURIComponent(
+    "Los Reyes Magos\n" + fecha + "\n\n" +
+    venta.items.map(i => i.cantidad + " x " + i.nombre + " — " + moneda(i.precio * i.cantidad)).join("\n") +
+    "\n\nTotal: " + moneda(venta.total) + "\nPago: " + metodoLabel
+  );
+  document.getElementById("ticketWhatsapp").href = "https://wa.me/?text=" + textoWhatsapp;
+
+  document.getElementById("ticketCard").style.display = "block";
+  document.getElementById("ticketCard").scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function cerrarTicket() {
+  document.getElementById("ticketCard").style.display = "none";
+}
+
+function imprimirTicket() {
+  window.print();
+}
+
+/* ---------- Fiado ---------- */
+function renderFiado() {
+  const pendientes = state.creditos.filter(c => !c.pagado);
+  const totalPendiente = pendientes.reduce((s, c) => s + c.monto, 0);
+  document.getElementById("fiadoTotalPendiente").textContent = moneda(totalPendiente);
+
+  const porCliente = {};
+  pendientes.forEach(c => {
+    if (!porCliente[c.cliente]) porCliente[c.cliente] = [];
+    porCliente[c.cliente].push(c);
+  });
+
+  const cont = document.getElementById("fiadoLista");
+  const vacio = document.getElementById("fiadoVacio");
+  const clientes = Object.keys(porCliente);
+  if (!clientes.length) { cont.innerHTML = ""; vacio.style.display = "block"; return; }
+  vacio.style.display = "none";
+  cont.innerHTML = clientes.map(nombre => {
+    const deudas = porCliente[nombre];
+    const totalCliente = deudas.reduce((s, c) => s + c.monto, 0);
+    const detalle = deudas.map(c =>
+      `<div class="kv" style="padding:3px 0;">
+        <span class="label">${new Date(c.fecha).toLocaleDateString("es-MX")}</span>
+        <span>${moneda(c.monto)}
+          <button class="btn btn-outline btn-sm" style="margin-left:6px;" onclick="marcarPagado('${c.id}')">Pagó</button>
+        </span>
+      </div>`
+    ).join("");
+    return `
+      <div class="prod" style="flex-direction:column; align-items:stretch;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+          <div class="name">${escapeHtml(nombre)}</div>
+          <div class="price">${moneda(totalCliente)}</div>
+        </div>
+        ${detalle}
+      </div>
+    `;
+  }).join("");
+}
+
+function marcarPagado(creditoId) {
+  const credito = state.creditos.find(c => c.id === creditoId);
+  if (!credito) return;
+  credito.pagado = true;
+  // el dinero cobrado ahora sí entra a caja como efectivo (ajústalo si te lo dieron por otro medio)
+  state.ventas.push({
+    id: crypto.randomUUID(),
+    fecha: new Date().toISOString(),
+    items: [],
+    total: credito.monto,
+    pago: "efectivo",
+    esCobroFiado: true,
+    cliente: credito.cliente
+  });
+  guardar();
+  mostrarToast("Marcado como pagado: " + credito.cliente);
+  renderFiado();
 }
 
 /* ---------- Recibir compra ---------- */
-function buscarParaCompra() {
+async function buscarParaCompra() {
   const codigo = document.getElementById("cBarras").value.trim();
   const cont = document.getElementById("compraResultado");
   if (!codigo) { cont.innerHTML = ""; return; }
   const prod = state.productos.find(p => p.barras === codigo || p.codigo === codigo);
   if (!prod) {
-    cont.innerHTML = `
-      <div class="empty">
-        No hay ningún producto con ese código todavía.<br>
-        Ve a "Productos" para darlo de alta y guardar este código de barras.
-      </div>`;
+    cont.innerHTML = `<div class="empty">Buscando en el catálogo externo...</div>`;
+    const info = await buscarOpenFoodFacts(codigo);
+    if (info) {
+      cont.innerHTML = `
+        <div class="prod">
+          <div class="info">
+            <div class="name">${escapeHtml(info.nombre)}${info.marca ? " — " + escapeHtml(info.marca) : ""}</div>
+            <div class="meta">Encontrado en catálogo externo, aún no está en tu inventario</div>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="irADarDeAlta('${codigo.replace(/'/g, "\\'")}', '${info.nombre.replace(/'/g, "\\'")}')">Dar de alta con este nombre</button>
+      `;
+    } else {
+      cont.innerHTML = `
+        <div class="empty">
+          No hay ningún producto con ese código todavía, ni apareció en el catálogo externo.<br>
+          Ve a "Productos" para darlo de alta manualmente.
+        </div>`;
+    }
     return;
   }
   cont.innerHTML = `
@@ -1077,6 +1374,7 @@ function escapeHtml(str) {
 renderInventario();
 renderCaja();
 renderCompras();
+aplicarRol();
 </script>
 </body>
 </html>
