@@ -374,6 +374,12 @@
       <button class="btn btn-secondary" onclick="abrirCambioRol()">Cambiar a modo empleado</button>
     </div>
     <div class="card">
+      <h2>Catálogo y precios gratuitos</h2>
+      <div class="hint">Los Reyes Magos usa Open Food Facts para reconocer productos por código de barras y Open Prices para intentar encontrar precios reportados. <strong>No requiere API Key ni suscripción.</strong></div>
+      <div class="hint">Los precios son observaciones de la comunidad, no precios oficiales. Si no hay un precio en MXN para ese código, el producto sigue funcionando normalmente y puedes capturar una referencia manual.</div>
+    </div>
+
+    <div class="card">
       <h2>PIN de dueño</h2>
       <div class="hint">Se usa para volver a modo dueño desde modo empleado.</div>
       <label for="pinNuevo">Nuevo PIN (4 dígitos)</label>
@@ -408,13 +414,32 @@
       <div class="row">
         <div>
           <label for="pPrecio">Precio de venta</label>
-          <input id="pPrecio" type="number" min="0" step="0.01" placeholder="0.00">
+          <input id="pPrecio" type="number" min="0" step="0.01" placeholder="0.00" oninput="actualizarComparacionPrecio()">
         </div>
         <div>
           <label for="pCosto">Costo de compra</label>
           <input id="pCosto" type="number" min="0" step="0.01" placeholder="0.00">
         </div>
       </div>
+      <div class="card" style="margin:12px 0 0; padding:12px; background:var(--green-soft);">
+        <div style="font-weight:800; margin-bottom:6px;">🔎 Producto reconocido</div>
+        <div id="pCatalogoInfo" class="hint" style="margin-top:0;">Escanea el código y el POS intentará completar los datos automáticamente.</div>
+        <div class="row">
+          <div>
+            <label for="pReferencia">Referencia de precio ($)</label>
+            <input id="pReferencia" type="number" min="0" step="0.01" placeholder="0.00" oninput="actualizarComparacionPrecio()">
+          </div>
+          <div>
+            <label for="pFuenteReferencia">Fuente</label>
+            <input id="pFuenteReferencia" placeholder="Open Prices / manual" readonly>
+          </div>
+        </div>
+        <div id="pMercado" class="hint" style="margin-top:6px;"></div>
+        <div id="pComparacion" class="hint" style="margin-top:6px;"></div>
+        <button class="btn btn-secondary" type="button" onclick="consultarCatalogoYPrecios()">🔎 Consultar producto y precio</button>
+        <div class="hint" style="margin-top:6px;">No cambia tu precio automáticamente. Tú decides si lo dejas o lo modificas.</div>
+      </div>
+
       <div class="row">
         <div>
           <label for="pStock">Stock inicial</label>
@@ -546,14 +571,14 @@ let state = cargarEstado();
 
 function estadoInicial() {
   return {
-    productos: [],       // {id, nombre, categoria, medida, precio, costo, stock, minimo, barras, codigo}
+    productos: [],       // {id, nombre, categoria, medida, precio, costo, stock, minimo, barras, codigo, catalogoMarca, catalogoPresentacion, catalogoCategoria, precioReferencia, fuenteReferencia}
     contadores: { ABA: 0, PAP: 0 },
     ventas: [],           // ventas sin cortar (se vacía al hacer corte): {id, fecha, items, total, pago}
     historial: [],         // todas las ventas de siempre, para reportes: mismo formato que ventas
     compras: [],           // {id, fecha, productoId, nombre, cantidad, costo}
     creditos: [],           // ventas fiadas: {id, ventaId, cliente, monto, fecha, pagado}
     cortes: [],
-    config: { pin: "1234", rolActual: "dueno" }
+    config: { pin: "1234", rolActual: "dueno", precioCheckApiKey: "" }
   };
 }
 
@@ -672,35 +697,223 @@ function irADarDeAlta(codigo, nombre) {
   mostrarToast("Completa precio y stock para guardarlo");
 }
 
-/* ---------- Catálogo externo (Open Food Facts) ---------- */
-async function buscarOpenFoodFacts(codigo) {
+/* ---------- Catálogo gratuito: Open Food Facts / Open Products Facts ---------- */
+function textoPrimero(...vals) {
+  return vals.find(v => typeof v === "string" && v.trim())?.trim() || "";
+}
+
+function escaparParametro(v) {
+  return encodeURIComponent(String(v || "").trim());
+}
+
+async function fetchJsonSeguro(url, options = {}) {
   try {
-    const resp = await fetch("https://world.openfoodfacts.org/api/v2/product/" + encodeURIComponent(codigo) + ".json");
+    const resp = await fetch(url, options);
     if (!resp.ok) return null;
-    const data = await resp.json();
-    if (data.status === 1 && data.product) {
-      const nombre = data.product.product_name_es || data.product.product_name || "";
-      const marca = data.product.brands || "";
-      if (!nombre) return null;
-      return { nombre, marca };
-    }
+    return await resp.json();
   } catch (e) {
-    console.error("No se pudo consultar el catálogo externo", e);
+    console.warn("Consulta externa no disponible:", url, e);
+    return null;
+  }
+}
+
+async function buscarOpenFoodFacts(codigo) {
+  const headers = {
+    "Accept": "application/json",
+    "User-Agent": "LosReyesMagosPOS/1.0 (punto de venta)"
+  };
+
+  // Consultamos alimento y productos generales en paralelo.
+  const urls = [
+    "https://world.openfoodfacts.org/api/v2/product/" + escaparParametro(codigo) + ".json",
+    "https://world.openproductsfacts.org/api/v2/product/" + escaparParametro(codigo) + ".json"
+  ];
+
+  const respuestas = await Promise.all(urls.map(url => fetchJsonSeguro(url, {headers})));
+
+  for (const data of respuestas) {
+    if (data && data.status === 1 && data.product) {
+      const p = data.product;
+      const nombre = textoPrimero(
+        p.product_name_es, p.product_name, p.product_name_en, p.product_name_fr
+      );
+      if (!nombre) continue;
+
+      const marca = textoPrimero(p.brands, p.brand_owner, p.brands_tags?.[0]);
+      const presentacion = textoPrimero(
+        p.quantity, p.product_quantity, p.serving_size
+      );
+      const categorias = textoPrimero(
+        p.categories, p.categories_old,
+        Array.isArray(p.categories_tags_es) ? p.categories_tags_es.join(", ") : "",
+        Array.isArray(p.categories_tags) ? p.categories_tags.join(", ") : ""
+      );
+
+      return {
+        nombre,
+        marca,
+        presentacion,
+        categorias,
+        origen: data._id ? "Open Food Facts" : "Open Products Facts"
+      };
+    }
   }
   return null;
 }
 
-async function buscarCatalogoProducto() {
-  const codigo = document.getElementById("pBarras").value.trim();
-  if (!codigo) { mostrarToast("Escanea o escribe un código primero"); return; }
-  mostrarToast("Buscando en el catálogo...");
-  const info = await buscarOpenFoodFacts(codigo);
-  if (info) {
-    document.getElementById("pNombre").value = info.marca ? (info.nombre + " - " + info.marca) : info.nombre;
-    mostrarToast("Encontrado — revisa el nombre antes de guardar");
-  } else {
-    mostrarToast("No apareció en el catálogo, captúralo manual");
+function mostrarDatosCatalogo(info) {
+  const el = document.getElementById("pCatalogoInfo");
+  if (!el) return;
+
+  if (!info) {
+    el.textContent = "No encontramos datos del producto. Puedes capturarlo manualmente.";
+    return;
   }
+
+  const partes = [];
+  if (info.marca) partes.push("🏢 " + escapeHtml(info.marca));
+  if (info.presentacion) partes.push("📦 " + escapeHtml(info.presentacion));
+  if (info.categorias) partes.push("📂 " + escapeHtml(info.categorias));
+  partes.push("🌐 " + escapeHtml(info.origen || "Catálogo abierto"));
+
+  el.innerHTML = partes.join(" · ");
+}
+
+async function consultarOpenPrices(codigo) {
+  const url = "https://prices.openfoodfacts.org/api/v1/prices?product_code=" + escaparParametro(codigo) + "&size=20";
+  const data = await fetchJsonSeguro(url, {
+    headers: {
+      "Accept": "application/json",
+      "User-Agent": "LosReyesMagosPOS/1.0 (punto de venta)"
+    }
+  });
+
+  const items = Array.isArray(data?.items) ? data.items : [];
+
+  // Para una tienda en México, solo usamos observaciones en MXN.
+  const mxn = items
+    .map(item => {
+      const price = Number(item.price);
+      const currency = String(item.currency || item.price_currency || "").toUpperCase();
+      const date = item.date || item.observation_date || item.created || "";
+      const location = item.location || {};
+      const shop = textoPrimero(
+        location.name,
+        location.osm_name,
+        item.location_name,
+        item.shop_name,
+        item.store_name
+      );
+      return { price, currency, date, shop };
+    })
+    .filter(x => x.price > 0 && x.currency === "MXN")
+    .sort((a, b) => String(b.date).localeCompare(String(a.date)));
+
+  return mxn;
+}
+
+async function consultarCatalogoYPrecios() {
+  const codigo = document.getElementById("pBarras").value.trim();
+  if (!codigo) {
+    mostrarToast("Primero escanea o escribe el código de barras");
+    return;
+  }
+
+  mostrarToast("Buscando producto...");
+  const info = await buscarOpenFoodFacts(codigo);
+
+  if (info) {
+    document.getElementById("pNombre").value =
+      info.marca ? (info.nombre + " - " + info.marca) : info.nombre;
+    mostrarDatosCatalogo(info);
+  } else {
+    mostrarDatosCatalogo(null);
+  }
+
+  const mercadoEl = document.getElementById("pMercado");
+  const fuenteEl = document.getElementById("pFuenteReferencia");
+  const refEl = document.getElementById("pReferencia");
+
+  try {
+    const precios = await consultarOpenPrices(codigo);
+
+    if (precios.length) {
+      const ultimo = precios[0];
+      const min = Math.min(...precios.map(x => x.price));
+      const max = Math.max(...precios.map(x => x.price));
+
+      // Tomamos el precio observado más reciente como referencia editable.
+      refEl.value = ultimo.price.toFixed(2);
+      fuenteEl.value = "Open Prices — MXN";
+
+      const fecha = ultimo.date ? new Date(ultimo.date).toLocaleDateString("es-MX") : "";
+      mercadoEl.innerHTML =
+        `💰 Último precio reportado: <strong>${moneda(ultimo.price)}</strong>` +
+        (fecha ? ` · ${fecha}` : "") +
+        (ultimo.shop ? ` · ${escapeHtml(ultimo.shop)}` : "") +
+        `<br>Rango encontrado: <strong>${moneda(min)}</strong> a <strong>${moneda(max)}</strong> · ${precios.length} reporte(s) MXN.`;
+    } else {
+      mercadoEl.textContent =
+        "💰 No encontramos un precio MXN reportado para este código. Puedes escribir una referencia manual.";
+      fuenteEl.value = "Manual";
+    }
+  } catch (e) {
+    mercadoEl.textContent = "💰 No se pudieron consultar precios; puedes capturar la referencia manualmente.";
+    fuenteEl.value = "Manual";
+  }
+
+  actualizarComparacionPrecio();
+
+  if (info && document.getElementById("pNombre").value) {
+    mostrarToast("Producto reconocido. Revisa los datos.");
+  } else {
+    mostrarToast("Consulta terminada. Revisa o captura el producto.");
+  }
+}
+
+async function buscarCatalogoProducto() {
+  await consultarCatalogoYPrecios();
+}
+
+// Mantener compatibilidad con cualquier botón/flujo anterior.
+async function consultarPrecioReferenciaProducto() {
+  await consultarCatalogoYPrecios();
+}
+
+function actualizarComparacionPrecio() {
+  const precio = parseFloat(document.getElementById("pPrecio").value);
+  const ref = parseFloat(document.getElementById("pReferencia").value);
+  const el = document.getElementById("pComparacion");
+  if (!el) return;
+  if (isNaN(precio) || !ref || ref <= 0) {
+    el.textContent = "";
+    return;
+  }
+
+  const dif = precio - ref;
+  const pct = Math.abs(dif / ref * 100);
+
+  if (dif < 0) {
+    el.innerHTML = `⚠️ Tu precio está <strong>${moneda(Math.abs(dif))}</strong> (${pct.toFixed(1)}%) por debajo de la referencia.`;
+  } else if (dif > 0) {
+    el.innerHTML = `ℹ️ Tu precio está <strong>${moneda(dif)}</strong> (${pct.toFixed(1)}%) por arriba de la referencia.`;
+  } else {
+    el.innerHTML = "✅ Tu precio coincide con la referencia.";
+  }
+}
+
+/* Consulta automática al terminar de capturar un código de barras */
+let catalogoLookupTimer = null;
+const pBarrasEl = document.getElementById("pBarras");
+if (pBarrasEl) {
+  pBarrasEl.addEventListener("input", () => {
+    clearTimeout(catalogoLookupTimer);
+    const codigo = pBarrasEl.value.trim();
+    if (codigo.length < 8) return;
+    catalogoLookupTimer = setTimeout(() => {
+      if (document.activeElement === pBarrasEl) consultarCatalogoYPrecios();
+    }, 700);
+  });
 }
 
 /* ---------- Productos ---------- */
@@ -725,16 +938,22 @@ function guardarProducto() {
   if (editandoId) {
     const prod = state.productos.find(p => p.id === editandoId);
     if (!prod) { cancelarEdicion(); return; }
-    Object.assign(prod, { nombre, categoria, medida, precio, costo, stock, minimo, barras, estrategia });
+    const precioReferencia = parseFloat(document.getElementById("pReferencia").value) || 0;
+    const fuenteReferencia = document.getElementById("pFuenteReferencia").value.trim();
+    const catalogoInfo = document.getElementById("pCatalogoInfo")?.textContent || "";
+    Object.assign(prod, { nombre, categoria, medida, precio, costo, stock, minimo, barras, estrategia, precioReferencia, fuenteReferencia, catalogoInfo, fechaReferencia: precioReferencia ? new Date().toISOString() : null });
     guardar();
     mostrarToast("Producto actualizado: " + prod.codigo);
     cancelarEdicion();
   } else {
     state.contadores[categoria] = (state.contadores[categoria] || 0) + 1;
     const codigo = categoria + "-" + String(state.contadores[categoria]).padStart(4, "0");
+    const precioReferencia = parseFloat(document.getElementById("pReferencia").value) || 0;
+    const fuenteReferencia = document.getElementById("pFuenteReferencia").value.trim();
     state.productos.push({
       id: crypto.randomUUID(),
-      nombre, categoria, medida, precio, costo, stock, minimo, barras, codigo, estrategia
+      nombre, categoria, medida, precio, costo, stock, minimo, barras, codigo, estrategia,
+      precioReferencia, fuenteReferencia, catalogoInfo: document.getElementById("pCatalogoInfo")?.textContent || "", fechaReferencia: precioReferencia ? new Date().toISOString() : null
     });
     guardar();
     mostrarToast("Producto guardado: " + codigo);
@@ -750,6 +969,10 @@ function limpiarFormularioProducto() {
   document.getElementById("pStock").value = "";
   document.getElementById("pMinimo").value = "";
   document.getElementById("pBarras").value = "";
+  document.getElementById("pReferencia").value = "";
+  document.getElementById("pFuenteReferencia").value = "";  if (document.getElementById("pCatalogoInfo")) document.getElementById("pCatalogoInfo").textContent = "Escanea el código y el POS intentará completar los datos automáticamente.";
+  if (document.getElementById("pMercado")) document.getElementById("pMercado").textContent = "";
+  document.getElementById("pComparacion").textContent = "";
   document.getElementById("pEstrategia").value = "normal";
 }
 
@@ -765,6 +988,10 @@ function editarProducto(id) {
   document.getElementById("pStock").value = prod.stock;
   document.getElementById("pMinimo").value = prod.minimo || "";
   document.getElementById("pBarras").value = prod.barras || "";
+  document.getElementById("pReferencia").value = prod.precioReferencia || "";
+  document.getElementById("pFuenteReferencia").value = prod.fuenteReferencia || "";
+  if (document.getElementById("pCatalogoInfo")) document.getElementById("pCatalogoInfo").textContent = prod.catalogoInfo || "Producto guardado; puedes volver a consultar el catálogo si deseas actualizarlo.";
+  actualizarComparacionPrecio();
   document.getElementById("pEstrategia").value = prod.estrategia || "normal";
   document.getElementById("formProductoTitulo").textContent = "Editando: " + prod.codigo;
   document.getElementById("btnGuardarProducto").textContent = "Guardar cambios";
@@ -810,6 +1037,7 @@ function renderInventario() {
           ${p.codigo} · Stock: <span class="${p.stock <= p.minimo && p.minimo > 0 ? 'stock-low' : ''}">${p.stock} ${p.medida}</span>
         </div>
         <div class="margen-tag">Margen: ${moneda(margen)} (${margenPct}%)</div>
+        ${p.precioReferencia > 0 ? `<div class="hint" style="margin-top:4px;">Referencia 2026: <strong>${moneda(p.precioReferencia)}</strong> · ${p.precio < p.precioReferencia ? '⬇️ estás por debajo' : p.precio > p.precioReferencia ? '⬆️ estás por arriba' : '✅ igual a referencia'}</div>` : ''}
       </div>
       <div style="display:flex; align-items:center; gap:8px;">
         <div class="price">${moneda(p.precio)}</div>
@@ -863,6 +1091,7 @@ document.getElementById("ventaBuscar").addEventListener("input", (e) => {
       <div class="info">
         <div class="name">${escapeHtml(p.nombre)}</div>
         <div class="meta">${p.codigo} · Stock: ${p.stock} ${p.medida}</div>
+        ${p.precioReferencia > 0 ? `<div class="hint">Referencia 2026: <strong>${moneda(p.precioReferencia)}</strong> · Tu precio: <strong>${moneda(p.precio)}</strong> ${p.precio < p.precioReferencia ? '⚠️ por debajo' : p.precio > p.precioReferencia ? '⬆️ por arriba' : '✅ igual'}</div>` : ''}
       </div>
       <div style="display:flex; align-items:center; gap:8px;">
         <div class="price">${moneda(p.precio)}</div>
@@ -1300,6 +1529,8 @@ function renderReportes() {
   }
 }
 
+document.getElementById("pPrecio").addEventListener("input", actualizarComparacionPrecio);
+document.getElementById("pReferencia").addEventListener("input", actualizarComparacionPrecio);
 /* ---------- Escaneo con cámara ---------- */
 let escanerActivo = null;       // instancia de la librería externa (respaldo)
 let streamNativo = null;         // stream de cámara cuando se usa el detector nativo
@@ -1361,6 +1592,7 @@ async function iniciarCamaraNativa() {
           }
           cerrarEscaner();
           mostrarToast("Código leído: " + codigoDetectado);
+          if (campoDestinoEscaner === "pBarras") { setTimeout(() => consultarCatalogoYPrecios(), 250); }
           return;
         }
       } catch (e) { /* frame sin código legible, se ignora */ }
