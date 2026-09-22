@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Los Reyes Magos — POS</title>
+<style>
+  :root {
+    --cream: #FAF7FB;
+    --ink: #2E2A3A;
+    --ink-soft: #7A7390;
+    --line: #E4DCEE;
+    --red: #7C5FA6;
+    --red-dark: #5F4380;
+    --gold: #B8862E;
+    --gold-soft: #F1E3C4;
+    --green: #6B7F5B;
+    --green-soft: #E9EEE3;
+    --amber: #B4770F;
+    --amber-soft: #FBEED9;
+    --card: #FFFFFF;
+    --radius: 10px;
+    --shadow: 0 1px 2px rgba(46,42,58,0.08);
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-sizing: border-box;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --cream: #1C1A22;
+      --ink: #F1EDF6;
+      --ink-soft: #B3ACC7;
+      --line: #372F44;
+      --card: #24202C;
+      --gold-soft: #3A2E17;
+      --green-soft: #262B21;
+      --amber-soft: #332506;
+    }
+  }
+  :root[data-theme="dark"] {
+    --cream: #1C1A22;
+    --ink: #F1EDF6;
+    --ink-soft: #B3ACC7;
+    --line: #372F44;
+    --card: #24202C;
+    --gold-soft: #3A2E17;
+    --green-soft: #262B21;
+    --amber-soft: #332506;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); height: 100%; }
+  * { box-sizing: border-box; }
+  body {
+    height: 100%;
+    margin: 0;
+    background: var(--cream);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  header {
+    position: sticky;
+    top: 0;
+    padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 14px;
+    background: var(--red);
+    color: #fff;
+    z-index: 20;
+    box-shadow: var(--shadow);
+  }
+  header h1 {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+  }
+  header p {
+    margin: 2px 0 0;
+    font-size: 12.5px;
+    opacity: 0.85;
+  }
+  nav {
+    display: flex;
+    gap: 6px;
+    padding: 8px 10px;
+    background: var(--card);
+    border-bottom: 1px solid var(--line);
+    overflow-x: auto;
+    position: sticky;
+    top: calc(58px + env(safe-area-inset-top, 0px));
+    z-index: 19;
+  }
+  nav button {
+    flex: none;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--ink-soft);
+    padding: 8px 13px;
+    border-radius: 999px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  nav button.active {
+    background: var(--red);
+    border-color: var(--red);
+    color: #fff;
+  }
+  main {
+    padding: 14px 14px 100px;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+  .view { display: none; }
+  .view.active { display: block; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+  }
+  .card h2 {
+    margin: 0 0 10px;
+    font-size: 15px;
+    font-weight: 700;
+  }
+  label {
+    display: block;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    margin: 10px 0 4px;
+  }
+  input, select {
+    width: 100%;
+    padding: 10px 11px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-size: 15px;
+    background: var(--cream);
+    color: var(--ink);
+  }
+  input:focus, select:focus, button:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 1px;
+  }
+  .row { display: flex; gap: 10px; }
+  .row > * { flex: 1; }
+  .btn {
+    display: inline-block;
+    border: none;
+    border-radius: 8px;
+    padding: 11px 16px;
+    font-size: 14.5px;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 12px;
+  }
+  .btn-primary { background: var(--red); color: #fff; }
+  .btn-primary:active { background: var(--red-dark); }
+  .btn-secondary { background: var(--gold-soft); color: var(--gold); }
+  .btn-outline { background: transparent; border: 1px solid var(--line); color: var(--ink); }
+  .btn-danger { background: #F4DEDA; color: var(--red-dark); }
+  .btn-sm { width: auto; padding: 7px 12px; font-size: 13px; margin-top: 0; }
+  .prod-list { display: flex; flex-direction: column; gap: 8px; }
+  .prod {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 12px;
+    gap: 10px;
+  }
+  .prod .info { min-width: 0; }
+  .prod .name { font-weight: 600; font-size: 14.5px; }
+  .prod .meta { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+  .badge {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+    margin-right: 5px;
+  }
+  .badge-aba { background: var(--green-soft); color: var(--green); }
+  .badge-pap { background: var(--gold-soft); color: var(--gold); }
+  .badge-estrategia { background: var(--line); color: var(--ink-soft); }
+  .margen-tag { font-size: 11.5px; color: var(--ink-soft); }
+  .stock-low { color: var(--amber); font-weight: 700; }
+  .price { font-weight: 700; white-space: nowrap; }
+  .empty {
+    text-align: center;
+    color: var(--ink-soft);
+    font-size: 13.5px;
+    padding: 24px 10px;
+  }
+  .cart-bar {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px));
+    background: var(--card);
+    border-top: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    z-index: 25;
+  }
+  .cart-bar .total { font-size: 16px; font-weight: 800; }
+  .cart-bar .total span { font-size: 12px; font-weight: 500; color: var(--ink-soft); display: block; }
+  .cart-bar button {
+    background: var(--red); color: #fff; border: none;
+    padding: 11px 20px; border-radius: 8px; font-weight: 700; font-size: 14px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+  th { color: var(--ink-soft); font-weight: 600; font-size: 11.5px; text-transform: none; }
+  .qty-ctrl { display: flex; align-items: center; gap: 6px; }
+  .qty-ctrl button {
+    width: 26px; height: 26px; border-radius: 6px; border: 1px solid var(--line);
+    background: var(--cream); font-weight: 700; font-size: 15px; cursor: pointer;
+  }
+  .kv { display: flex; justify-content: space-between; padding: 5px 0; font-size: 14px; }
+  .kv .label { color: var(--ink-soft); }
+  .toast {
+    position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%);
+    background: var(--green); color: #fff; padding: 9px 16px; border-radius: 999px;
+    font-size: 13px; font-weight: 600; z-index: 40; box-shadow: var(--shadow);
+    opacity: 0; transition: opacity .2s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+  .hint { font-size: 12px; color: var(--ink-soft); margin-top: 8px; line-height: 1.5; }
+  .efectivo-box {
+    margin-top: 12px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--cream);
+  }
+  .cambio-box {
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: var(--green-soft);
+    color: var(--green);
+    font-weight: 800;
+    text-align: center;
+    font-size: 16px;
+  }
+  .scan-btn {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    width: 100%; margin-top: 8px; padding: 11px; border-radius: 8px;
+    background: var(--green-soft); color: var(--green); border: none;
+    font-weight: 700; font-size: 14px; cursor: pointer;
+  }
+  .scan-overlay {
+    display: none;
+    position: fixed; inset: 0; background: rgba(28,20,38,0.92);
+    z-index: 100; flex-direction: column;
+  }
+  .scan-overlay.open { display: flex; }
+  .scan-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 12px;
+    color: #fff;
+  }
+  .scan-header h3 { margin: 0; font-size: 15px; }
+  .scan-header button {
+    background: rgba(255,255,255,0.15); color: #fff; border: none;
+    width: 32px; height: 32px; border-radius: 999px; font-size: 16px; cursor: pointer;
+  }
+  #camReader { width: 100%; max-width: 480px; margin: 0 auto; }
+  .scan-status {
+    text-align: center; color: #fff; font-size: 13px; padding: 10px 20px;
+    opacity: 0.8;
+  }
+  @media print {
+    body * { visibility: hidden; }
+    #ticketContenido, #ticketContenido * { visibility: visible; }
+    #ticketContenido { position: absolute; top: 0; left: 0; width: 100%; font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+    <div>
+      <h1>Los Reyes Magos</h1>
+      <p>Punto de venta — Abarrotes &amp; Papelería</p>
+    </div>
+    <button id="btnRol" onclick="abrirCambioRol()" style="background:rgba(255,255,255,0.18); color:#fff; border:none; border-radius:999px; padding:6px 12px; font-size:12px; font-weight:700; white-space:nowrap;">👤 Dueño</button>
+  </div>
+</header>
+
+<nav id="tabs">
+  <button data-view="vender" class="active">Vender</button>
+  <button data-view="productos" data-solo-dueno="1">Productos</button>
+  <button data-view="compras" data-solo-dueno="1">Recibir compra</button>
+  <button data-view="caja" data-solo-dueno="1">Corte de caja</button>
+  <button data-view="reportes" data-solo-dueno="1">Reportes</button>
+  <button data-view="fiado">Fiado</button>
+  <button data-view="ajustes" data-solo-dueno="1">Ajustes</button>
+</nav>
+
+<div class="scan-overlay" id="rolOverlay">
+  <div class="scan-header">
+    <h3>Cambiar de modo</h3>
+    <button onclick="cerrarCambioRol()">✕</button>
+  </div>
+  <div style="padding:20px; max-width:400px; margin:0 auto; width:100%;">
+    <div id="rolAEmpleado">
+      <p style="color:#fff; font-size:13.5px;">Vas a pasar a modo empleado: solo se verán "Vender" y "Fiado".</p>
+      <button class="btn btn-primary" onclick="cambiarRol('empleado')">Cambiar a modo empleado</button>
+    </div>
+    <div id="rolAPin" style="display:none;">
+      <label style="color:#fff;">PIN de dueño</label>
+      <input id="rolPinInput" type="password" inputmode="numeric" placeholder="****">
+      <button class="btn btn-primary" onclick="intentarVolverDueno()">Entrar como dueño</button>
+    </div>
+  </div>
+</div>
+
+<main>
+
+  <!-- VENDER -->
+  <section class="view active" id="view-vender">
+    <div class="card">
+      <h2>Buscar producto</h2>
+      <input id="ventaBuscar" placeholder="Nombre, código interno o código de barras" autocomplete="off">
+      <button class="scan-btn" onclick="abrirEscaner('ventaBuscar')">📷 Escanear con la cámara</button>
+      <div class="prod-list" id="ventaResultados" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="card" id="carritoCard">
+      <h2>Carrito</h2>
+      <div id="carritoLista" class="prod-list"></div>
+      <div id="carritoVacio" class="empty">Agrega productos para iniciar la venta</div>
+    </div>
+
+    <div class="card" id="pagoCard" style="display:none;">
+      <h2>Forma de pago</h2>
+      <div class="kv"><span class="label">Total a cobrar</span><span id="pagoTotal" style="font-weight:800; font-size:17px;">$0.00</span></div>
+      <div class="row" style="margin-top:10px;">
+        <button class="btn btn-secondary" onclick="mostrarPagoEfectivo()">💵 Efectivo</button>
+        <button class="btn btn-secondary" onclick="cobrar('tarjeta')">💳 Tarjeta</button>
+      </div>
+      <button class="btn btn-secondary" onclick="cobrar('transferencia')">↔️ Transferencia</button>
+
+      <div id="efectivoBox" class="efectivo-box" style="display:none;">
+        <label for="pagoRecibido" style="margin-top:0;">¿Cuánto paga el cliente?</label>
+        <input id="pagoRecibido" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" oninput="calcularCambio()">
+        <div id="cambioBox" class="cambio-box" style="display:none;">
+          Cambio a entregar: <span id="pagoCambio">$0.00</span>
+        </div>
+        <button class="btn btn-primary" style="margin-top:10px;" onclick="cobrar('efectivo')">Confirmar pago en efectivo</button>
+      </div>
+
+      <label for="pagoCliente" style="margin-top:14px;">Nombre del cliente (solo necesario para fiado)</label>
+      <input id="pagoCliente" placeholder="Ej. Don Chuy">
+      <button class="btn" style="background:var(--amber-soft); color:var(--amber); margin-top:8px;" onclick="cobrar('fiado')">Fiado (a crédito)</button>
+      <button class="btn btn-outline" onclick="cerrarPago()">Cancelar</button>
+    </div>
+
+    <div class="card" id="ticketCard" style="display:none;">
+      <h2>Venta registrada ✅</h2>
+      <div id="ticketContenido" style="font-size:13.5px; line-height:1.6;"></div>
+      <a class="btn btn-secondary" id="ticketWhatsapp" href="#" target="_blank" style="text-decoration:none; text-align:center;">Compartir por WhatsApp</a>
+      <button class="btn btn-outline" onclick="imprimirTicket()">Imprimir</button>
+      <button class="btn btn-primary" onclick="cerrarTicket()">Nueva venta</button>
+    </div>
+  </section>
+
+  <!-- FIADO -->
+  <section class="view" id="view-fiado">
+    <div class="card">
+      <h2>Cuentas por cobrar</h2>
+      <div class="kv"><span class="label">Total pendiente</span><span id="fiadoTotalPendiente" style="font-weight:800; font-size:17px;">$0.00</span></div>
+    </div>
+    <div class="card">
+      <h2>Por cliente</h2>
+      <div class="prod-list" id="fiadoLista"></div>
+      <div class="empty" id="fiadoVacio">No hay ventas a crédito pendientes</div>
+    </div>
+  </section>
+
+  <!-- AJUSTES -->
+  <section class="view" id="view-ajustes">
+    <div class="card">
+      <h2>Modo empleado</h2>
+      <div class="hint">Cuando alguien más atienda la tienda, cambia a modo empleado: solo verá "Vender" y "Fiado", sin acceso a precios, reportes ni corte de caja.</div>
+      <button class="btn btn-secondary" onclick="abrirCambioRol()">Cambiar a modo empleado</button>
+    </div>
+    <div class="card">
+      <h2>PIN de dueño</h2>
+      <div class="hint">Se usa para volver a modo dueño desde modo empleado.</div>
+      <label for="pinNuevo">Nuevo PIN (4 dígitos)</label>
+      <input id="pinNuevo" type="password" inputmode="numeric" maxlength="4" placeholder="****">
+      <button class="btn btn-primary" onclick="cambiarPin()">Guardar PIN</button>
+    </div>
+  </section>
+
+  <!-- PRODUCTOS -->
+  <section class="view" id="view-productos">
+    <div class="card">
+      <h2 id="formProductoTitulo">Nuevo producto</h2>
+      <label for="pNombre">Nombre</label>
+      <input id="pNombre" placeholder="Ej. Coca-Cola 600ml">
+      <div class="row">
+        <div>
+          <label for="pCategoria">Categoría</label>
+          <select id="pCategoria">
+            <option value="ABA">Abarrotes</option>
+            <option value="PAP">Papelería</option>
+          </select>
+        </div>
+        <div>
+          <label for="pMedida">Se vende por</label>
+          <select id="pMedida">
+            <option value="pieza">Pieza</option>
+            <option value="kg">Kilogramo</option>
+            <option value="litro">Litro</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="pPrecio">Precio de venta</label>
+          <input id="pPrecio" type="number" min="0" step="0.01" placeholder="0.00">
+        </div>
+        <div>
+          <label for="pCosto">Costo de compra</label>
+          <input id="pCosto" type="number" min="0" step="0.01" placeholder="0.00">
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="pStock">Stock inicial</label>
+          <input id="pStock" type="number" min="0" step="0.01" placeholder="0">
+        </div>
+        <div>
+          <label for="pMinimo">Stock mínimo (alerta)</label>
+          <input id="pMinimo" type="number" min="0" step="0.01" placeholder="Ej. 5">
+        </div>
+      </div>
+      <label for="pBarras">Código de barras de fábrica (opcional)</label>
+      <input id="pBarras" placeholder="Escanea o escribe el código del empaque">
+      <button class="scan-btn" onclick="abrirEscaner('pBarras')">📷 Escanear con la cámara</button>
+      <button class="scan-btn" style="background:var(--gold-soft); color:var(--gold);" onclick="buscarCatalogoProducto()">🔎 Buscar en catálogo (autocompletar nombre)</button>
+      <label for="pEstrategia">Tipo de estrategia</label>
+      <select id="pEstrategia">
+        <option value="normal">Normal</option>
+        <option value="gancho">Gancho (precio bajo para atraer)</option>
+        <option value="margen">Margen alto</option>
+        <option value="impulso">Impulso (venta rápida, exhibición)</option>
+        <option value="promocion">Promoción temporal</option>
+      </select>
+      <div class="hint">Se le asignará un código interno automático (ABA-0001, PAP-0001...). Si guardas el código de fábrica, tus próximas compras de este producto sumarán stock solo con escanearlo.</div>
+      <button class="btn btn-primary" id="btnGuardarProducto" onclick="guardarProducto()">Guardar producto</button>
+      <button class="btn btn-outline" id="btnCancelarEdicion" onclick="cancelarEdicion()" style="display:none;">Cancelar edición</button>
+    </div>
+
+    <div class="card">
+      <h2>Por reabastecer</h2>
+      <div class="prod-list" id="reabastecerLista"></div>
+      <div class="empty" id="reabastecerVacio">Nada por debajo de su stock mínimo</div>
+    </div>
+
+    <div class="card">
+      <h2>Inventario</h2>
+      <input id="invBuscar" placeholder="Buscar por nombre, código o categoría" autocomplete="off" style="margin-bottom:10px;">
+      <div class="prod-list" id="invLista"></div>
+    </div>
+  </section>
+
+  <!-- RECIBIR COMPRA -->
+  <section class="view" id="view-compras">
+    <div class="card">
+      <h2>Recepción de mercancía</h2>
+      <label for="cBarras">Código de barras (de fábrica o interno)</label>
+      <input id="cBarras" placeholder="Escanea o escribe el código" autocomplete="off">
+      <button class="scan-btn" onclick="abrirEscaner('cBarras')">📷 Escanear con la cámara</button>
+      <button class="btn btn-secondary" onclick="buscarParaCompra()">Buscar producto</button>
+      <div id="compraResultado" style="margin-top:12px;"></div>
+      <div class="hint">Si el código no coincide con ningún producto guardado, podrás darlo de alta manualmente desde la pestaña "Productos" y guardar ahí su código de barras.</div>
+    </div>
+
+    <div class="card">
+      <h2>Compras recientes</h2>
+      <div class="prod-list" id="comprasLista"></div>
+      <div class="empty" id="comprasVacio">Aún no registras entradas de mercancía</div>
+    </div>
+  </section>
+
+  <!-- CAJA -->
+  <section class="view" id="view-caja">
+    <div class="card">
+      <h2>Corte de caja</h2>
+      <div class="kv"><span class="label">Ventas registradas (sin cortar)</span><span id="cajaNumVentas">0</span></div>
+      <div class="kv"><span class="label">Efectivo</span><span id="cajaEfectivo">$0.00</span></div>
+      <div class="kv"><span class="label">Tarjeta</span><span id="cajaTarjeta">$0.00</span></div>
+      <div class="kv"><span class="label">Transferencia</span><span id="cajaTransferencia">$0.00</span></div>
+      <div class="kv" style="border-top:1px solid var(--line); margin-top:6px; padding-top:10px;">
+        <span class="label" style="font-weight:700; color:var(--ink);">Total</span>
+        <span id="cajaTotal" style="font-weight:800; font-size:17px;">$0.00</span>
+      </div>
+      <button class="btn btn-primary" onclick="hacerCorte()">Hacer corte de caja</button>
+    </div>
+
+    <div class="card">
+      <h2>Cortes anteriores</h2>
+      <div id="cortesLista"></div>
+      <div class="empty" id="cortesVacio">Todavía no hay cortes guardados</div>
+    </div>
+  </section>
+
+  <!-- REPORTES -->
+  <section class="view" id="view-reportes">
+    <div class="card">
+      <h2>Resumen general</h2>
+      <div class="kv"><span class="label">Ventas totales registradas</span><span id="repNumVentas">0</span></div>
+      <div class="kv"><span class="label">Ingresos totales</span><span id="repIngresos">$0.00</span></div>
+      <div class="kv"><span class="label">Ganancia estimada</span><span id="repGanancia">$0.00</span></div>
+      <div class="hint">La ganancia se calcula con el costo que tenía guardado cada producto al momento de venderse. Si un producto no tiene costo registrado, se cuenta como $0 de costo.</div>
+    </div>
+
+    <div class="card">
+      <h2>Ventas por día (últimos 14 días)</h2>
+      <table id="repDias"><thead><tr><th>Día</th><th>Ventas</th><th>Total</th></tr></thead><tbody></tbody></table>
+      <div class="empty" id="repDiasVacio">Aún no hay ventas registradas</div>
+    </div>
+
+    <div class="card">
+      <h2>Productos más vendidos</h2>
+      <table id="repTop"><thead><tr><th>Producto</th><th>Unidades</th><th>Ingresos</th></tr></thead><tbody></tbody></table>
+      <div class="empty" id="repTopVacio">Aún no hay ventas registradas</div>
+    </div>
+  </section>
+
+</main>
+
+<div class="cart-bar" id="cartBar" style="display:none;">
+  <div class="total">$<span id="cartTotal">0.00</span><span>Total del carrito</span></div>
+  <button onclick="abrirCobro()">Cobrar</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="scan-overlay" id="scanOverlay">
+  <div class="scan-header">
+    <h3>Escanear código de barras</h3>
+    <button onclick="cerrarEscaner()">✕</button>
+  </div>
+  <video id="camVideo" playsinline muted autoplay style="width:100%; max-width:480px; margin:0 auto; display:none; border-radius:8px;"></video>
+  <div id="camReader"></div>
+  <div class="scan-status" id="scanStatus">Apunta la cámara al código de barras</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+/* ---------- Estado y almacenamiento ---------- */
+const LS_KEY = "reyesmagos_pos_v1";
+let state = cargarEstado();
+
+function estadoInicial() {
+  return {
+    productos: [],       // {id, nombre, categoria, medida, precio, costo, stock, minimo, barras, codigo}
+    contadores: { ABA: 0, PAP: 0 },
+    ventas: [],           // ventas sin cortar (se vacía al hacer corte): {id, fecha, items, total, pago}
+    historial: [],         // todas las ventas de siempre, para reportes: mismo formato que ventas
+    compras: [],           // {id, fecha, productoId, nombre, cantidad, costo}
+    creditos: [],           // ventas fiadas: {id, ventaId, cliente, monto, fecha, pagado}
+    cortes: [],
+    config: { pin: "1234", rolActual: "dueno" }
+  };
+}
+
+function cargarEstado() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return estadoInicial();
+    const parsed = JSON.parse(raw);
+    return Object.assign(estadoInicial(), parsed);
+  } catch (e) {
+    console.error("No se pudo leer el almacenamiento local", e);
+    return estadoInicial();
+  }
+}
+
+function guardar() {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.error("No se pudo guardar", e);
+    mostrarToast("No se pudo guardar. Revisa el almacenamiento del navegador.");
+  }
+}
+
+function moneda(n) {
+  return "$" + (Number(n) || 0).toFixed(2);
+}
+
+function mostrarToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 1800);
+}
+
+/* ---------- Navegación ---------- */
+document.getElementById("tabs").addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-view]");
+  if (!btn) return;
+  document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  document.getElementById("view-" + btn.dataset.view).classList.add("active");
+  if (btn.dataset.view === "productos") renderInventario();
+  if (btn.dataset.view === "caja") renderCaja();
+  if (btn.dataset.view === "compras") renderCompras();
+  if (btn.dataset.view === "reportes") renderReportes();
+  if (btn.dataset.view === "fiado") renderFiado();
+});
+
+/* ---------- Roles (dueño / empleado) ---------- */
+function aplicarRol() {
+  const esDueno = state.config.rolActual !== "empleado";
+  document.querySelectorAll('#tabs button[data-solo-dueno]').forEach(b => {
+    b.style.display = esDueno ? "" : "none";
+  });
+  document.getElementById("btnRol").textContent = esDueno ? "👤 Dueño" : "🔒 Empleado";
+  if (!esDueno) {
+    // si el rol cambia estando en una vista solo de dueño, regresa a Vender
+    const activo = document.querySelector(".view.active");
+    if (activo && activo.id !== "view-vender" && activo.id !== "view-fiado") {
+      document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+      document.querySelector('nav button[data-view="vender"]').classList.add("active");
+      document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+      document.getElementById("view-vender").classList.add("active");
+    }
+  }
+}
+
+function abrirCambioRol() {
+  document.getElementById("rolOverlay").classList.add("open");
+  const esDueno = state.config.rolActual !== "empleado";
+  document.getElementById("rolAEmpleado").style.display = esDueno ? "block" : "none";
+  document.getElementById("rolAPin").style.display = esDueno ? "none" : "block";
+  document.getElementById("rolPinInput").value = "";
+}
+
+function cerrarCambioRol() {
+  document.getElementById("rolOverlay").classList.remove("open");
+}
+
+function cambiarRol(rol) {
+  state.config.rolActual = rol;
+  guardar();
+  aplicarRol();
+  cerrarCambioRol();
+  mostrarToast(rol === "empleado" ? "Modo empleado activado" : "Modo dueño activado");
+}
+
+function intentarVolverDueno() {
+  const pin = document.getElementById("rolPinInput").value.trim();
+  if (pin === state.config.pin) {
+    cambiarRol("dueno");
+  } else {
+    mostrarToast("PIN incorrecto");
+  }
+}
+
+function cambiarPin() {
+  const nuevo = document.getElementById("pinNuevo").value.trim();
+  if (!/^\d{4}$/.test(nuevo)) { mostrarToast("El PIN debe ser de 4 dígitos"); return; }
+  state.config.pin = nuevo;
+  guardar();
+  document.getElementById("pinNuevo").value = "";
+  mostrarToast("PIN actualizado");
+}
+
+function irADarDeAlta(codigo, nombre) {
+  document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+  document.querySelector('nav button[data-view="productos"]').classList.add("active");
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  document.getElementById("view-productos").classList.add("active");
+  document.getElementById("pBarras").value = codigo;
+  document.getElementById("pNombre").value = nombre;
+  document.getElementById("pNombre").scrollIntoView({ behavior: "smooth", block: "center" });
+  mostrarToast("Completa precio y stock para guardarlo");
+}
+
+/* ---------- Catálogo externo (Open Food Facts) ---------- */
+async function buscarOpenFoodFacts(codigo) {
+  try {
+    const resp = await fetch("https://world.openfoodfacts.org/api/v2/product/" + encodeURIComponent(codigo) + ".json");
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    if (data.status === 1 && data.product) {
+      const nombre = data.product.product_name_es || data.product.product_name || "";
+      const marca = data.product.brands || "";
+      if (!nombre) return null;
+      return { nombre, marca };
+    }
+  } catch (e) {
+    console.error("No se pudo consultar el catálogo externo", e);
+  }
+  return null;
+}
+
+async function buscarCatalogoProducto() {
+  const codigo = document.getElementById("pBarras").value.trim();
+  if (!codigo) { mostrarToast("Escanea o escribe un código primero"); return; }
+  mostrarToast("Buscando en el catálogo...");
+  const info = await buscarOpenFoodFacts(codigo);
+  if (info) {
+    document.getElementById("pNombre").value = info.marca ? (info.nombre + " - " + info.marca) : info.nombre;
+    mostrarToast("Encontrado — revisa el nombre antes de guardar");
+  } else {
+    mostrarToast("No apareció en el catálogo, captúralo manual");
+  }
+}
+
+/* ---------- Productos ---------- */
+function guardarProducto() {
+  const nombre = document.getElementById("pNombre").value.trim();
+  const categoria = document.getElementById("pCategoria").value;
+  const medida = document.getElementById("pMedida").value;
+  const precio = parseFloat(document.getElementById("pPrecio").value);
+  const costo = parseFloat(document.getElementById("pCosto").value) || 0;
+  const stock = parseFloat(document.getElementById("pStock").value) || 0;
+  const minimo = parseFloat(document.getElementById("pMinimo").value) || 0;
+  const barras = document.getElementById("pBarras").value.trim();
+  const estrategia = document.getElementById("pEstrategia").value;
+
+  if (!nombre) { mostrarToast("Falta el nombre del producto"); return; }
+  if (isNaN(precio) || precio < 0) { mostrarToast("Falta un precio válido"); return; }
+  if (barras && state.productos.some(p => p.barras === barras && p.id !== editandoId)) {
+    mostrarToast("Ese código de barras ya está registrado en otro producto");
+    return;
+  }
+
+  if (editandoId) {
+    const prod = state.productos.find(p => p.id === editandoId);
+    if (!prod) { cancelarEdicion(); return; }
+    Object.assign(prod, { nombre, categoria, medida, precio, costo, stock, minimo, barras, estrategia });
+    guardar();
+    mostrarToast("Producto actualizado: " + prod.codigo);
+    cancelarEdicion();
+  } else {
+    state.contadores[categoria] = (state.contadores[categoria] || 0) + 1;
+    const codigo = categoria + "-" + String(state.contadores[categoria]).padStart(4, "0");
+    state.productos.push({
+      id: crypto.randomUUID(),
+      nombre, categoria, medida, precio, costo, stock, minimo, barras, codigo, estrategia
+    });
+    guardar();
+    mostrarToast("Producto guardado: " + codigo);
+    limpiarFormularioProducto();
+  }
+  renderInventario();
+}
+
+function limpiarFormularioProducto() {
+  document.getElementById("pNombre").value = "";
+  document.getElementById("pPrecio").value = "";
+  document.getElementById("pCosto").value = "";
+  document.getElementById("pStock").value = "";
+  document.getElementById("pMinimo").value = "";
+  document.getElementById("pBarras").value = "";
+  document.getElementById("pEstrategia").value = "normal";
+}
+
+function editarProducto(id) {
+  const prod = state.productos.find(p => p.id === id);
+  if (!prod) return;
+  editandoId = id;
+  document.getElementById("pNombre").value = prod.nombre;
+  document.getElementById("pCategoria").value = prod.categoria;
+  document.getElementById("pMedida").value = prod.medida;
+  document.getElementById("pPrecio").value = prod.precio;
+  document.getElementById("pCosto").value = prod.costo || "";
+  document.getElementById("pStock").value = prod.stock;
+  document.getElementById("pMinimo").value = prod.minimo || "";
+  document.getElementById("pBarras").value = prod.barras || "";
+  document.getElementById("pEstrategia").value = prod.estrategia || "normal";
+  document.getElementById("formProductoTitulo").textContent = "Editando: " + prod.codigo;
+  document.getElementById("btnGuardarProducto").textContent = "Guardar cambios";
+  document.getElementById("btnCancelarEdicion").style.display = "block";
+  document.getElementById("view-productos").scrollIntoView({ behavior: "smooth" });
+}
+
+function cancelarEdicion() {
+  editandoId = null;
+  limpiarFormularioProducto();
+  document.getElementById("formProductoTitulo").textContent = "Nuevo producto";
+  document.getElementById("btnGuardarProducto").textContent = "Guardar producto";
+  document.getElementById("btnCancelarEdicion").style.display = "none";
+}
+
+function catLabel(cat) { return cat === "ABA" ? "Abarrotes" : "Papelería"; }
+function catBadgeClass(cat) { return cat === "ABA" ? "badge-aba" : "badge-pap"; }
+function estrategiaLabel(e) {
+  return { normal: "Normal", gancho: "Gancho", margen: "Margen alto", impulso: "Impulso", promocion: "Promoción" }[e] || "Normal";
+}
+
+function renderInventario() {
+  const q = (document.getElementById("invBuscar").value || "").toLowerCase();
+  const cont = document.getElementById("invLista");
+  const items = state.productos.filter(p =>
+    !q || p.nombre.toLowerCase().includes(q) || p.codigo.toLowerCase().includes(q) ||
+    (p.barras && p.barras.includes(q)) || catLabel(p.categoria).toLowerCase().includes(q)
+  );
+  if (!items.length) {
+    cont.innerHTML = '<div class="empty">Sin productos que coincidan</div>';
+    return;
+  }
+  cont.innerHTML = items.map(p => {
+    const margen = p.precio - (p.costo || 0);
+    const margenPct = p.precio > 0 ? Math.round((margen / p.precio) * 100) : 0;
+    return `
+    <div class="prod">
+      <div class="info">
+        <div class="name">${escapeHtml(p.nombre)}</div>
+        <div class="meta">
+          <span class="badge ${catBadgeClass(p.categoria)}">${catLabel(p.categoria)}</span>
+          <span class="badge badge-estrategia">${estrategiaLabel(p.estrategia)}</span><br>
+          ${p.codigo} · Stock: <span class="${p.stock <= p.minimo && p.minimo > 0 ? 'stock-low' : ''}">${p.stock} ${p.medida}</span>
+        </div>
+        <div class="margen-tag">Margen: ${moneda(margen)} (${margenPct}%)</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <div class="price">${moneda(p.precio)}</div>
+        <button class="btn btn-outline btn-sm" onclick="editarProducto('${p.id}')">Editar</button>
+      </div>
+    </div>
+  `;
+  }).join("");
+
+  renderReabastecer();
+}
+document.getElementById("invBuscar").addEventListener("input", renderInventario);
+
+function renderReabastecer() {
+  const cont = document.getElementById("reabastecerLista");
+  const vacio = document.getElementById("reabastecerVacio");
+  const bajos = state.productos.filter(p => p.minimo > 0 && p.stock <= p.minimo);
+  if (!bajos.length) { cont.innerHTML = ""; vacio.style.display = "block"; return; }
+  vacio.style.display = "none";
+  cont.innerHTML = bajos.map(p => `
+    <div class="prod">
+      <div class="info">
+        <div class="name">${escapeHtml(p.nombre)}</div>
+        <div class="meta">${p.codigo} · Mínimo: ${p.minimo} ${p.medida}</div>
+      </div>
+      <div class="price stock-low">${p.stock} ${p.medida}</div>
+    </div>
+  `).join("");
+}
+
+/* ---------- Venta / carrito ---------- */
+let carrito = [];
+let editandoId = null;
+
+function buscarProductosVenta(q) {
+  q = q.toLowerCase();
+  return state.productos.filter(p =>
+    p.nombre.toLowerCase().includes(q) || p.codigo.toLowerCase().includes(q) ||
+    (p.barras && p.barras.includes(q))
+  ).slice(0, 8);
+}
+
+document.getElementById("ventaBuscar").addEventListener("input", (e) => {
+  const q = e.target.value.trim();
+  const cont = document.getElementById("ventaResultados");
+  if (!q) { cont.innerHTML = ""; return; }
+  const res = buscarProductosVenta(q);
+  if (!res.length) { cont.innerHTML = '<div class="empty">No se encontró ese producto</div>'; return; }
+  cont.innerHTML = res.map(p => `
+    <div class="prod">
+      <div class="info">
+        <div class="name">${escapeHtml(p.nombre)}</div>
+        <div class="meta">${p.codigo} · Stock: ${p.stock} ${p.medida}</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <div class="price">${moneda(p.precio)}</div>
+        <button class="btn btn-secondary btn-sm" onclick="agregarAlCarrito('${p.id}')">Agregar</button>
+      </div>
+    </div>
+  `).join("");
+});
+
+function agregarAlCarrito(id) {
+  const prod = state.productos.find(p => p.id === id);
+  if (!prod) return;
+  const existente = carrito.find(i => i.id === id);
+  if (existente) {
+    existente.cantidad += 1;
+  } else {
+    carrito.push({ id: prod.id, nombre: prod.nombre, precio: prod.precio, cantidad: 1, stockDisponible: prod.stock });
+  }
+  document.getElementById("ventaBuscar").value = "";
+  document.getElementById("ventaResultados").innerHTML = "";
+  renderCarrito();
+  mostrarToast(prod.nombre + " agregado");
+}
+
+function cambiarCantidad(id, delta) {
+  const item = carrito.find(i => i.id === id);
+  if (!item) return;
+  item.cantidad += delta;
+  if (item.cantidad <= 0) carrito = carrito.filter(i => i.id !== id);
+  renderCarrito();
+}
+
+function renderCarrito() {
+  const cont = document.getElementById("carritoLista");
+  const vacio = document.getElementById("carritoVacio");
+  const bar = document.getElementById("cartBar");
+  if (!carrito.length) {
+    cont.innerHTML = "";
+    vacio.style.display = "block";
+    bar.style.display = "none";
+    cerrarPago();
+    return;
+  }
+  vacio.style.display = "none";
+  bar.style.display = "flex";
+  cont.innerHTML = carrito.map(i => `
+    <div class="prod">
+      <div class="info">
+        <div class="name">${escapeHtml(i.nombre)}</div>
+        <div class="meta">${moneda(i.precio)} c/u</div>
+      </div>
+      <div class="qty-ctrl">
+        <button onclick="cambiarCantidad('${i.id}', -1)">−</button>
+        <span>${i.cantidad}</span>
+        <button onclick="cambiarCantidad('${i.id}', 1)">+</button>
+      </div>
+    </div>
+  `).join("");
+  const total = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
+  document.getElementById("cartTotal").textContent = total.toFixed(2);
+}
+
+function abrirCobro() {
+  if (!carrito.length) return;
+  const total = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
+  document.getElementById("pagoTotal").textContent = moneda(total);
+  document.getElementById("pagoCard").style.display = "block";
+  document.getElementById("pagoCard").scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function cerrarPago() {
+  document.getElementById("pagoCard").style.display = "none";
+  const recibido = document.getElementById("pagoRecibido");
+  const efectivoBox = document.getElementById("efectivoBox");
+  const cambioBox = document.getElementById("cambioBox");
+  if (recibido) recibido.value = "";
+  if (efectivoBox) efectivoBox.style.display = "none";
+  if (cambioBox) cambioBox.style.display = "none";
+}
+
+function mostrarPagoEfectivo() {
+  document.getElementById("efectivoBox").style.display = "block";
+  document.getElementById("pagoRecibido").focus();
+  calcularCambio();
+}
+
+function calcularCambio() {
+  const total = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
+  const recibido = parseFloat(document.getElementById("pagoRecibido").value);
+  const box = document.getElementById("cambioBox");
+  const el = document.getElementById("pagoCambio");
+
+  if (isNaN(recibido)) {
+    box.style.display = "none";
+    return;
+  }
+
+  box.style.display = "block";
+  if (recibido < total) {
+    el.textContent = "Faltan " + moneda(total - recibido);
+    box.style.background = "var(--amber-soft)";
+    box.style.color = "var(--amber)";
+  } else {
+    el.textContent = moneda(recibido - total);
+    box.style.background = "var(--green-soft)";
+    box.style.color = "var(--green)";
+  }
+}
+
+function cobrar(pago) {
+  const total = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
+  const cliente = document.getElementById("pagoCliente").value.trim();
+
+  let recibido = null;
+  let cambio = 0;
+
+  if (pago === "efectivo") {
+    recibido = parseFloat(document.getElementById("pagoRecibido").value);
+    if (isNaN(recibido) || recibido < total) {
+      mostrarToast("El efectivo recibido debe ser igual o mayor al total");
+      return;
+    }
+    cambio = recibido - total;
+  }
+
+  if (pago === "fiado" && !cliente) {
+    mostrarToast("Escribe el nombre del cliente para registrar el fiado");
+    return;
+  }
+
+  // descuenta stock y toma el costo actual de cada producto para la venta
+  const items = carrito.map(i => {
+    const prod = state.productos.find(p => p.id === i.id);
+    if (prod) prod.stock = Math.max(0, (prod.stock || 0) - i.cantidad);
+    return { id: i.id, nombre: i.nombre, cantidad: i.cantidad, precio: i.precio, costo: (prod && prod.costo) || 0 };
+  });
+  const venta = {
+    id: crypto.randomUUID(),
+    fecha: new Date().toISOString(),
+    items,
+    total,
+    pago,
+    cliente: cliente || null,
+    recibido: recibido,
+    cambio: cambio
+  };
+
+  // el historial cuenta la venta siempre (para reportes/ganancia); "ventas" (corte de caja)
+  // solo recibe el dinero que realmente entró — el fiado se registra aparte en "creditos"
+  state.historial.push(venta);
+  if (pago === "fiado") {
+    state.creditos.push({ id: crypto.randomUUID(), ventaId: venta.id, cliente, monto: total, fecha: venta.fecha, pagado: false });
+  } else {
+    state.ventas.push(venta);
+  }
+  guardar();
+
+  mostrarTicket(venta);
+  carrito = [];
+  renderCarrito();
+  cerrarPago();
+  document.getElementById("pagoCliente").value = "";
+  document.getElementById("pagoRecibido").value = "";
+  document.getElementById("efectivoBox").style.display = "none";
+  document.getElementById("cambioBox").style.display = "none";
+}
+
+/* ---------- Ticket ---------- */
+function mostrarTicket(venta) {
+  const fecha = new Date(venta.fecha).toLocaleString("es-MX");
+  const filas = venta.items.map(i =>
+    `${i.cantidad} x ${i.nombre} — ${moneda(i.precio * i.cantidad)}`
+  ).join("<br>");
+  const metodoLabel = { efectivo: "Efectivo", tarjeta: "Tarjeta", transferencia: "Transferencia", fiado: "Fiado — " + venta.cliente }[venta.pago] || venta.pago;
+
+  document.getElementById("ticketContenido").innerHTML = `
+    <strong>Los Reyes Magos</strong><br>
+    ${fecha}<br><br>
+    ${filas}<br><br>
+    <strong>Total: ${moneda(venta.total)}</strong><br>
+    Pago: ${metodoLabel}
+    ${venta.pago === "efectivo" ? "<br>Recibido: " + moneda(venta.recibido) + "<br><strong>Cambio: " + moneda(venta.cambio) + "</strong>" : ""}
+  `;
+
+  const textoWhatsapp = encodeURIComponent(
+    "Los Reyes Magos\n" + fecha + "\n\n" +
+    venta.items.map(i => i.cantidad + " x " + i.nombre + " — " + moneda(i.precio * i.cantidad)).join("\n") +
+    "\n\nTotal: " + moneda(venta.total) + "\nPago: " + metodoLabel +
+    (venta.pago === "efectivo" ? "\nRecibido: " + moneda(venta.recibido) + "\nCambio: " + moneda(venta.cambio) : "")
+  );
+  document.getElementById("ticketWhatsapp").href = "https://wa.me/?text=" + textoWhatsapp;
+
+  document.getElementById("ticketCard").style.display = "block";
+  document.getElementById("ticketCard").scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function cerrarTicket() {
+  document.getElementById("ticketCard").style.display = "none";
+}
+
+function imprimirTicket() {
+  window.print();
+}
+
+/* ---------- Fiado ---------- */
+function renderFiado() {
+  const pendientes = state.creditos.filter(c => !c.pagado);
+  const totalPendiente = pendientes.reduce((s, c) => s + c.monto, 0);
+  document.getElementById("fiadoTotalPendiente").textContent = moneda(totalPendiente);
+
+  const porCliente = {};
+  pendientes.forEach(c => {
+    if (!porCliente[c.cliente]) porCliente[c.cliente] = [];
+    porCliente[c.cliente].push(c);
+  });
+
+  const cont = document.getElementById("fiadoLista");
+  const vacio = document.getElementById("fiadoVacio");
+  const clientes = Object.keys(porCliente);
+  if (!clientes.length) { cont.innerHTML = ""; vacio.style.display = "block"; return; }
+  vacio.style.display = "none";
+  cont.innerHTML = clientes.map(nombre => {
+    const deudas = porCliente[nombre];
+    const totalCliente = deudas.reduce((s, c) => s + c.monto, 0);
+    const detalle = deudas.map(c =>
+      `<div class="kv" style="padding:3px 0;">
+        <span class="label">${new Date(c.fecha).toLocaleDateString("es-MX")}</span>
+        <span>${moneda(c.monto)}
+          <button class="btn btn-outline btn-sm" style="margin-left:6px;" onclick="marcarPagado('${c.id}')">Pagó</button>
+        </span>
+      </div>`
+    ).join("");
+    return `
+      <div class="prod" style="flex-direction:column; align-items:stretch;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+          <div class="name">${escapeHtml(nombre)}</div>
+          <div class="price">${moneda(totalCliente)}</div>
+        </div>
+        ${detalle}
+      </div>
+    `;
+  }).join("");
+}
+
+function marcarPagado(creditoId) {
+  const credito = state.creditos.find(c => c.id === creditoId);
+  if (!credito) return;
+  credito.pagado = true;
+  // el dinero cobrado ahora sí entra a caja como efectivo (ajústalo si te lo dieron por otro medio)
+  state.ventas.push({
+    id: crypto.randomUUID(),
+    fecha: new Date().toISOString(),
+    items: [],
+    total: credito.monto,
+    pago: "efectivo",
+    esCobroFiado: true,
+    cliente: credito.cliente
+  });
+  guardar();
+  mostrarToast("Marcado como pagado: " + credito.cliente);
+  renderFiado();
+}
+
+/* ---------- Recibir compra ---------- */
+async function buscarParaCompra() {
+  const codigo = document.getElementById("cBarras").value.trim();
+  const cont = document.getElementById("compraResultado");
+  if (!codigo) { cont.innerHTML = ""; return; }
+  const prod = state.productos.find(p => p.barras === codigo || p.codigo === codigo);
+  if (!prod) {
+    cont.innerHTML = `<div class="empty">Buscando en el catálogo externo...</div>`;
+    const info = await buscarOpenFoodFacts(codigo);
+    if (info) {
+      cont.innerHTML = `
+        <div class="prod">
+          <div class="info">
+            <div class="name">${escapeHtml(info.nombre)}${info.marca ? " — " + escapeHtml(info.marca) : ""}</div>
+            <div class="meta">Encontrado en catálogo externo, aún no está en tu inventario</div>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="irADarDeAlta('${codigo.replace(/'/g, "\\'")}', '${info.nombre.replace(/'/g, "\\'")}')">Dar de alta con este nombre</button>
+      `;
+    } else {
+      cont.innerHTML = `
+        <div class="empty">
+          No hay ningún producto con ese código todavía, ni apareció en el catálogo externo.<br>
+          Ve a "Productos" para darlo de alta manualmente.
+        </div>`;
+    }
+    return;
+  }
+  cont.innerHTML = `
+    <div class="prod">
+      <div class="info">
+        <div class="name">${escapeHtml(prod.nombre)}</div>
+        <div class="meta">${prod.codigo} · Stock actual: ${prod.stock} ${prod.medida}</div>
+      </div>
+    </div>
+    <label for="cCantidad">Cantidad recibida</label>
+    <input id="cCantidad" type="number" min="0" step="0.01" placeholder="0">
+    <label for="cCosto">Costo por unidad (opcional, actualiza el costo del producto)</label>
+    <input id="cCosto" type="number" min="0" step="0.01" placeholder="${prod.costo || 0}">
+    <button class="btn btn-primary" onclick="confirmarCompra('${prod.id}')">Sumar al inventario</button>
+  `;
+}
+
+function confirmarCompra(prodId) {
+  const cantidad = parseFloat(document.getElementById("cCantidad").value);
+  if (isNaN(cantidad) || cantidad <= 0) { mostrarToast("Escribe una cantidad válida"); return; }
+  const costoInput = document.getElementById("cCosto").value;
+  const costo = costoInput === "" ? null : parseFloat(costoInput);
+  const prod = state.productos.find(p => p.id === prodId);
+  if (!prod) return;
+  prod.stock = (prod.stock || 0) + cantidad;
+  if (costo !== null && !isNaN(costo) && costo >= 0) prod.costo = costo;
+  state.compras.push({
+    id: crypto.randomUUID(),
+    fecha: new Date().toISOString(),
+    productoId: prod.id,
+    nombre: prod.nombre,
+    cantidad,
+    costo: prod.costo || 0
+  });
+  guardar();
+  document.getElementById("cBarras").value = "";
+  document.getElementById("compraResultado").innerHTML = "";
+  mostrarToast("Stock actualizado: " + prod.nombre + " (+" + cantidad + ")");
+  renderCompras();
+}
+
+function renderCompras() {
+  const cont = document.getElementById("comprasLista");
+  const vacio = document.getElementById("comprasVacio");
+  const recientes = state.compras.slice(-15).reverse();
+  if (!recientes.length) { cont.innerHTML = ""; vacio.style.display = "block"; return; }
+  vacio.style.display = "none";
+  cont.innerHTML = recientes.map(c => `
+    <div class="prod">
+      <div class="info">
+        <div class="name">${escapeHtml(c.nombre)}</div>
+        <div class="meta">${new Date(c.fecha).toLocaleString("es-MX")}</div>
+      </div>
+      <div class="price">+${c.cantidad}</div>
+    </div>
+  `).join("");
+}
+
+/* ---------- Corte de caja ---------- */
+function renderCaja() {
+  const ventas = state.ventas;
+  const porMetodo = { efectivo: 0, tarjeta: 0, transferencia: 0 };
+  let total = 0;
+  ventas.forEach(v => { porMetodo[v.pago] = (porMetodo[v.pago] || 0) + v.total; total += v.total; });
+
+  document.getElementById("cajaNumVentas").textContent = ventas.length;
+  document.getElementById("cajaEfectivo").textContent = moneda(porMetodo.efectivo);
+  document.getElementById("cajaTarjeta").textContent = moneda(porMetodo.tarjeta);
+  document.getElementById("cajaTransferencia").textContent = moneda(porMetodo.transferencia);
+  document.getElementById("cajaTotal").textContent = moneda(total);
+
+  const cont = document.getElementById("cortesLista");
+  const vacio = document.getElementById("cortesVacio");
+  const cortes = state.cortes.slice().reverse();
+  if (!cortes.length) { cont.innerHTML = ""; vacio.style.display = "block"; return; }
+  vacio.style.display = "none";
+  cont.innerHTML = cortes.map(c => `
+    <div class="kv" style="border-bottom:1px solid var(--line);">
+      <span class="label">${new Date(c.fecha).toLocaleString("es-MX")} · ${c.numVentas} ventas</span>
+      <span style="font-weight:700;">${moneda(c.total)}</span>
+    </div>
+  `).join("");
+}
+
+function hacerCorte() {
+  if (!state.ventas.length) { mostrarToast("No hay ventas para cortar"); return; }
+  const porMetodo = { efectivo: 0, tarjeta: 0, transferencia: 0 };
+  let total = 0;
+  state.ventas.forEach(v => { porMetodo[v.pago] = (porMetodo[v.pago] || 0) + v.total; total += v.total; });
+  state.cortes.push({
+    id: crypto.randomUUID(),
+    fecha: new Date().toISOString(),
+    numVentas: state.ventas.length,
+    total, detalle: porMetodo
+  });
+  state.ventas = [];
+  guardar();
+  mostrarToast("Corte guardado: " + moneda(total));
+  renderCaja();
+}
+
+/* ---------- Reportes ---------- */
+function renderReportes() {
+  const historial = state.historial;
+
+  document.getElementById("repNumVentas").textContent = historial.length;
+  const ingresos = historial.reduce((s, v) => s + v.total, 0);
+  const ganancia = historial.reduce((s, v) =>
+    s + v.items.reduce((si, i) => si + (i.precio - (i.costo || 0)) * i.cantidad, 0), 0);
+  document.getElementById("repIngresos").textContent = moneda(ingresos);
+  document.getElementById("repGanancia").textContent = moneda(ganancia);
+
+  // ventas por día, últimos 14 días
+  const porDia = {};
+  historial.forEach(v => {
+    const dia = v.fecha.slice(0, 10);
+    if (!porDia[dia]) porDia[dia] = { num: 0, total: 0 };
+    porDia[dia].num += 1;
+    porDia[dia].total += v.total;
+  });
+  const dias = Object.keys(porDia).sort().reverse().slice(0, 14);
+  const tbodyDias = document.querySelector("#repDias tbody");
+  const diasVacio = document.getElementById("repDiasVacio");
+  if (!dias.length) {
+    tbodyDias.innerHTML = ""; diasVacio.style.display = "block";
+  } else {
+    diasVacio.style.display = "none";
+    tbodyDias.innerHTML = dias.map(d => `
+      <tr>
+        <td>${new Date(d + "T00:00:00").toLocaleDateString("es-MX", { day: "2-digit", month: "short" })}</td>
+        <td>${porDia[d].num}</td>
+        <td>${moneda(porDia[d].total)}</td>
+      </tr>
+    `).join("");
+  }
+
+  // top productos por unidades vendidas
+  const porProducto = {};
+  historial.forEach(v => v.items.forEach(i => {
+    if (!porProducto[i.id]) porProducto[i.id] = { nombre: i.nombre, unidades: 0, ingresos: 0 };
+    porProducto[i.id].unidades += i.cantidad;
+    porProducto[i.id].ingresos += i.precio * i.cantidad;
+  }));
+  const top = Object.values(porProducto).sort((a, b) => b.unidades - a.unidades).slice(0, 10);
+  const tbodyTop = document.querySelector("#repTop tbody");
+  const topVacio = document.getElementById("repTopVacio");
+  if (!top.length) {
+    tbodyTop.innerHTML = ""; topVacio.style.display = "block";
+  } else {
+    topVacio.style.display = "none";
+    tbodyTop.innerHTML = top.map(p => `
+      <tr>
+        <td>${escapeHtml(p.nombre)}</td>
+        <td>${p.unidades}</td>
+        <td>${moneda(p.ingresos)}</td>
+      </tr>
+    `).join("");
+  }
+}
+
+/* ---------- Escaneo con cámara ---------- */
+let escanerActivo = null;       // instancia de la librería externa (respaldo)
+let streamNativo = null;         // stream de cámara cuando se usa el detector nativo
+let escaneandoNativo = false;
+let campoDestinoEscaner = null;
+
+function abrirEscaner(inputId) {
+  campoDestinoEscaner = inputId;
+  document.getElementById("scanOverlay").classList.add("open");
+  document.getElementById("camReader").innerHTML = "";
+  document.getElementById("camVideo").style.display = "none";
+
+  if ("BarcodeDetector" in window) {
+    // Detector nativo del navegador: no descarga nada, funciona con cualquier conexión
+    document.getElementById("scanStatus").textContent = "Abriendo cámara...";
+    iniciarCamaraNativa();
+  } else {
+    // Respaldo: librería externa (requiere descargar ~algo de internet)
+    document.getElementById("scanStatus").textContent = "Cargando lector de cámara, espera un momento...";
+    let intentos = 0;
+    const esperar = setInterval(() => {
+      intentos++;
+      if (typeof Html5Qrcode !== "undefined") {
+        clearInterval(esperar);
+        iniciarCamaraLibreria();
+      } else if (intentos > 60) { // ~30 segundos
+        clearInterval(esperar);
+        document.getElementById("scanStatus").innerHTML =
+          "No se pudo cargar el lector de cámara — tu navegador no trae detector propio y la conexión está muy lenta para bajar el de respaldo.<br><br>" +
+          '<button class="scan-btn" style="width:auto; display:inline-flex;" onclick="abrirEscaner(\'' + inputId + '\')">Reintentar</button>';
+      }
+    }, 500);
+  }
+}
+
+async function iniciarCamaraNativa() {
+  try {
+    const detector = new BarcodeDetector({
+      formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "qr_code"]
+    });
+    streamNativo = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+    const video = document.getElementById("camVideo");
+    video.srcObject = streamNativo;
+    video.style.display = "block";
+    await video.play();
+    document.getElementById("scanStatus").textContent = "Apunta la cámara al código de barras";
+
+    escaneandoNativo = true;
+    const buscar = async () => {
+      if (!escaneandoNativo) return;
+      try {
+        const codigos = await detector.detect(video);
+        if (codigos.length > 0) {
+          const codigoDetectado = codigos[0].rawValue;
+          const input = document.getElementById(campoDestinoEscaner);
+          if (input) {
+            input.value = codigoDetectado;
+            input.dispatchEvent(new Event("input", { bubbles: true }));
+          }
+          cerrarEscaner();
+          mostrarToast("Código leído: " + codigoDetectado);
+          return;
+        }
+      } catch (e) { /* frame sin código legible, se ignora */ }
+      requestAnimationFrame(buscar);
+    };
+    requestAnimationFrame(buscar);
+  } catch (err) {
+    console.error("No se pudo abrir la cámara nativa", err);
+    document.getElementById("scanStatus").textContent =
+      "No se pudo abrir la cámara (" + (err.name || "error") + "): " + (err.message || "sin detalle");
+  }
+}
+
+function iniciarCamaraLibreria() {
+  document.getElementById("scanStatus").textContent = "Apunta la cámara al código de barras";
+  escanerActivo = new Html5Qrcode("camReader");
+  const formatos = [
+    Html5QrcodeSupportedFormats.EAN_13,
+    Html5QrcodeSupportedFormats.EAN_8,
+    Html5QrcodeSupportedFormats.UPC_A,
+    Html5QrcodeSupportedFormats.UPC_E,
+    Html5QrcodeSupportedFormats.CODE_128,
+    Html5QrcodeSupportedFormats.CODE_39,
+    Html5QrcodeSupportedFormats.QR_CODE
+  ];
+
+  escanerActivo.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: { width: 260, height: 160 }, formatsToSupport: formatos },
+    (codigoDetectado) => {
+      const input = document.getElementById(campoDestinoEscaner);
+      if (input) {
+        input.value = codigoDetectado;
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+      cerrarEscaner();
+      mostrarToast("Código leído: " + codigoDetectado);
+    },
+    () => { /* frame sin código detectado, se ignora */ }
+  ).catch((err) => {
+    console.error("No se pudo iniciar la cámara", err);
+    document.getElementById("scanStatus").textContent =
+      "No se pudo abrir la cámara. Revisa el permiso de cámara del navegador.";
+  });
+}
+
+function cerrarEscaner() {
+  document.getElementById("scanOverlay").classList.remove("open");
+  escaneandoNativo = false;
+  if (streamNativo) {
+    streamNativo.getTracks().forEach(t => t.stop());
+    streamNativo = null;
+  }
+  if (escanerActivo) {
+    escanerActivo.stop().then(() => escanerActivo.clear()).catch(() => {});
+    escanerActivo = null;
+  }
+}
+
+/* ---------- utilidades ---------- */
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+/* ---------- inicio ---------- */
+renderInventario();
+renderCaja();
+renderCompras();
+aplicarRol();
+</script>
+</body>
+</html>
