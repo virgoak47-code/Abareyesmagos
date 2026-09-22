@@ -231,23 +231,6 @@
   }
   .toast.show { opacity: 1; }
   .hint { font-size: 12px; color: var(--ink-soft); margin-top: 8px; line-height: 1.5; }
-  .efectivo-box {
-    margin-top: 12px;
-    padding: 12px;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    background: var(--cream);
-  }
-  .cambio-box {
-    margin-top: 10px;
-    padding: 10px 12px;
-    border-radius: 8px;
-    background: var(--green-soft);
-    color: var(--green);
-    font-weight: 800;
-    text-align: center;
-    font-size: 16px;
-  }
   .scan-btn {
     display: flex; align-items: center; justify-content: center; gap: 6px;
     width: 100%; margin-top: 8px; padding: 11px; border-radius: 8px;
@@ -343,20 +326,18 @@
       <h2>Forma de pago</h2>
       <div class="kv"><span class="label">Total a cobrar</span><span id="pagoTotal" style="font-weight:800; font-size:17px;">$0.00</span></div>
       <div class="row" style="margin-top:10px;">
-        <button class="btn btn-secondary" onclick="mostrarPagoEfectivo()">💵 Efectivo</button>
-        <button class="btn btn-secondary" onclick="cobrar('tarjeta')">💳 Tarjeta</button>
+        <button class="btn btn-secondary" onclick="mostrarPagoEfectivo()">Efectivo</button>
+        <button class="btn btn-secondary" onclick="cobrar('tarjeta')">Tarjeta</button>
       </div>
-      <button class="btn btn-secondary" onclick="cobrar('transferencia')">↔️ Transferencia</button>
-
-      <div id="efectivoBox" class="efectivo-box" style="display:none;">
+      <div id="efectivoBox" style="display:none; margin-top:12px; padding:12px; border:1px solid var(--line); border-radius:8px; background:var(--cream);">
         <label for="pagoRecibido" style="margin-top:0;">¿Cuánto paga el cliente?</label>
         <input id="pagoRecibido" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" oninput="calcularCambio()">
-        <div id="cambioBox" class="cambio-box" style="display:none;">
+        <div id="cambioBox" style="display:none; margin-top:10px; padding:10px; border-radius:8px; font-weight:800; text-align:center;">
           Cambio a entregar: <span id="pagoCambio">$0.00</span>
         </div>
         <button class="btn btn-primary" style="margin-top:10px;" onclick="cobrar('efectivo')">Confirmar pago en efectivo</button>
       </div>
-
+      <button class="btn btn-secondary" onclick="cobrar('transferencia')">Transferencia</button>
       <label for="pagoCliente" style="margin-top:14px;">Nombre del cliente (solo necesario para fiado)</label>
       <input id="pagoCliente" placeholder="Ej. Don Chuy">
       <button class="btn" style="background:var(--amber-soft); color:var(--amber); margin-top:8px;" onclick="cobrar('fiado')">Fiado (a crédito)</button>
@@ -520,4 +501,6 @@
     <div class="card">
       <h2>Resumen general</h2>
       <div class="kv"><span class="label">Ventas totales registradas</span><span id="repNumVentas">0</span></div>
-      <div class="kv"><span class="label">Ingresos totale
+      <div class="kv"><span class="label">Ingresos totales</span><span id="repIngresos">$0.00</span></div>
+      <div class="kv"><span class="label">Ganancia estimada</span><span id="repGanancia">$0.00</span></div>
+      <div class="hint">La ganancia se calcula con el costo que tenía g
