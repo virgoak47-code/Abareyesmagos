@@ -503,4 +503,506 @@
       <div class="kv"><span class="label">Ventas totales registradas</span><span id="repNumVentas">0</span></div>
       <div class="kv"><span class="label">Ingresos totales</span><span id="repIngresos">$0.00</span></div>
       <div class="kv"><span class="label">Ganancia estimada</span><span id="repGanancia">$0.00</span></div>
-      <div class="hint">La ganancia se calcula con el costo que tenía g
+            <div class="hint">La ganancia se calcula con el costo que tenía guardado cada producto al momento de venderse. Si un producto no tiene costo registrado, se cuenta como $0 de costo.</div>
+    </div>
+
+    <div class="card">
+      <h2>Ventas por día (últimos 14 días)</h2>
+      <table id="repDias"><thead><tr><th>Día</th><th>Ventas</th><th>Total</th></tr></thead><tbody></tbody></table>
+      <div class="empty" id="repDiasVacio">Aún no hay ventas registradas</div>
+    </div>
+
+    <div class="card">
+      <h2>Productos más vendidos</h2>
+      <table id="repTop"><thead><tr><th>Producto</th><th>Unidades</th><th>Ingresos</th></tr></thead><tbody></tbody></table>
+      <div class="empty" id="repTopVacio">Aún no hay ventas registradas</div>
+    </div>
+  </section>
+
+</main>
+
+<div class="cart-bar" id="cartBar" style="display:none;">
+  <div class="total">$<span id="cartTotal">0.00</span><span>Total del carrito</span></div>
+  <button onclick="abrirCobro()">Cobrar</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="scan-overlay" id="scanOverlay">
+  <div class="scan-header">
+    <h3>Escanear código de barras</h3>
+    <button onclick="cerrarEscaner()">✕</button>
+  </div>
+  <video id="camVideo" playsinline muted autoplay style="width:100%; max-width:480px; margin:0 auto; display:none; border-radius:8px;"></video>
+  <div id="camReader"></div>
+  <div class="scan-status" id="scanStatus">Apunta la cámara al código de barras</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+/* ---------- Estado y almacenamiento ---------- */
+const LS_KEY = "reyesmagos_pos_v1";
+let state = cargarEstado();
+
+function estadoInicial() {
+  return {
+    productos: [],       // {id, nombre, categoria, medida, precio, costo, stock, minimo, barras, codigo}
+    contadores: { ABA: 0, PAP: 0 },
+    ventas: [],           // ventas sin cortar (se vacía al hacer corte): {id, fecha, items, total, pago}
+    historial: [],         // todas las ventas de siempre, para reportes: mismo formato que ventas
+    compras: [],           // {id, fecha, productoId, nombre, cantidad, costo}
+    creditos: [],           // ventas fiadas: {id, ventaId, cliente, monto, fecha, pagado}
+    cortes: [],
+    config: { pin: "1234", rolActual: "dueno" }
+  };
+}
+
+function cargarEstado() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return estadoInicial();
+    const parsed = JSON.parse(raw);
+    return Object.assign(estadoInicial(), parsed);
+  } catch (e) {
+    console.error("No se pudo leer el almacenamiento local", e);
+    return estadoInicial();
+  }
+}
+
+function guardar() {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.error("No se pudo guardar", e);
+    mostrarToast("No se pudo guardar. Revisa el almacenamiento del navegador.");
+  }
+}
+
+function moneda(n) {
+  return "$" + (Number(n) || 0).toFixed(2);
+}
+
+function mostrarToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 1800);
+}
+
+/* ---------- Navegación ---------- */
+document.getElementById("tabs").addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-view]");
+  if (!btn) return;
+  document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  document.getElementById("view-" + btn.dataset.view).classList.add("active");
+  if (btn.dataset.view === "productos") renderInventario();
+  if (btn.dataset.view === "caja") renderCaja();
+  if (btn.dataset.view === "compras") renderCompras();
+  if (btn.dataset.view === "reportes") renderReportes();
+  if (btn.dataset.view === "fiado") renderFiado();
+});
+
+/* ---------- Roles (dueño / empleado) ---------- */
+function aplicarRol() {
+  const esDueno = state.config.rolActual !== "empleado";
+  document.querySelectorAll('#tabs button[data-solo-dueno]').forEach(b => {
+    b.style.display = esDueno ? "" : "none";
+  });
+  document.getElementById("btnRol").textContent = esDueno ? "👤 Dueño" : "🔒 Empleado";
+  if (!esDueno) {
+    // si el rol cambia estando en una vista solo de dueño, regresa a Vender
+    const activo = document.querySelector(".view.active");
+    if (activo && activo.id !== "view-vender" && activo.id !== "view-fiado") {
+      document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+      document.querySelector('nav button[data-view="vender"]').classList.add("active");
+      document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+      document.getElementById("view-vender").classList.add("active");
+    }
+  }
+}
+
+function abrirCambioRol() {
+  document.getElementById("rolOverlay").classList.add("open");
+  const esDueno = state.config.rolActual !== "empleado";
+  document.getElementById("rolAEmpleado").style.display = esDueno ? "block" : "none";
+  document.getElementById("rolAPin").style.display = esDueno ? "none" : "block";
+  document.getElementById("rolPinInput").value = "";
+}
+
+function cerrarCambioRol() {
+  document.getElementById("rolOverlay").classList.remove("open");
+}
+
+function cambiarRol(rol) {
+  state.config.rolActual = rol;
+  guardar();
+  aplicarRol();
+  cerrarCambioRol();
+  mostrarToast(rol === "empleado" ? "Modo empleado activado" : "Modo dueño activado");
+}
+
+function intentarVolverDueno() {
+  const pin = document.getElementById("rolPinInput").value.trim();
+  if (pin === state.config.pin) {
+    cambiarRol("dueno");
+  } else {
+    mostrarToast("PIN incorrecto");
+  }
+}
+
+function cambiarPin() {
+  const nuevo = document.getElementById("pinNuevo").value.trim();
+  if (!/^\d{4}$/.test(nuevo)) { mostrarToast("El PIN debe ser de 4 dígitos"); return; }
+  state.config.pin = nuevo;
+  guardar();
+  document.getElementById("pinNuevo").value = "";
+  mostrarToast("PIN actualizado");
+}
+
+function irADarDeAlta(codigo, nombre) {
+  document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+  document.querySelector('nav button[data-view="productos"]').classList.add("active");
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  document.getElementById("view-productos").classList.add("active");
+  document.getElementById("pBarras").value = codigo;
+  document.getElementById("pNombre").value = nombre;
+  document.getElementById("pNombre").scrollIntoView({ behavior: "smooth", block: "center" });
+  mostrarToast("Completa precio y stock para guardarlo");
+}
+
+/* ---------- Catálogo externo (Open Food Facts) ---------- */
+async function buscarOpenFoodFacts(codigo) {
+  try {
+    const resp = await fetch("https://world.openfoodfacts.org/api/v2/product/" + encodeURIComponent(codigo) + ".json");
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    if (data.status === 1 && data.product) {
+      const nombre = data.product.product_name_es || data.product.product_name || "";
+      const marca = data.product.brands || "";
+      if (!nombre) return null;
+      return { nombre, marca };
+    }
+  } catch (e) {
+    console.error("No se pudo consultar el catálogo externo", e);
+  }
+  return null;
+}
+
+async function buscarCatalogoProducto() {
+  const codigo = document.getElementById("pBarras").value.trim();
+  if (!codigo) { mostrarToast("Escanea o escribe un código primero"); return; }
+  mostrarToast("Buscando en el catálogo...");
+  const info = await buscarOpenFoodFacts(codigo);
+  if (info) {
+    document.getElementById("pNombre").value = info.marca ? (info.nombre + " - " + info.marca) : info.nombre;
+    mostrarToast("Encontrado — revisa el nombre antes de guardar");
+  } else {
+    mostrarToast("No apareció en el catálogo, captúralo manual");
+  }
+}
+
+/* ---------- Productos ---------- */
+function guardarProducto() {
+  const nombre = document.getElementById("pNombre").value.trim();
+  const categoria = document.getElementById("pCategoria").value;
+  const medida = document.getElementById("pMedida").value;
+  const precio = parseFloat(document.getElementById("pPrecio").value);
+  const costo = parseFloat(document.getElementById("pCosto").value) || 0;
+  const stock = parseFloat(document.getElementById("pStock").value) || 0;
+  const minimo = parseFloat(document.getElementById("pMinimo").value) || 0;
+  const barras = document.getElementById("pBarras").value.trim();
+  const estrategia = document.getElementById("pEstrategia").value;
+
+  if (!nombre) { mostrarToast("Falta el nombre del producto"); return; }
+  if (isNaN(precio) || precio < 0) { mostrarToast("Falta un precio válido"); return; }
+  if (barras && state.productos.some(p => p.barras === barras && p.id !== editandoId)) {
+    mostrarToast("Ese código de barras ya está registrado en otro producto");
+    return;
+  }
+
+  if (editandoId) {
+    const prod = state.productos.find(p => p.id === editandoId);
+    if (!prod) { cancelarEdicion(); return; }
+    Object.assign(prod, { nombre, categoria, medida, precio, costo, stock, minimo, barras, estrategia });
+    guardar();
+    mostrarToast("Producto actualizado: " + prod.codigo);
+    cancelarEdicion();
+  } else {
+    state.contadores[categoria] = (state.contadores[categoria] || 0) + 1;
+    const codigo = categoria + "-" + String(state.contadores[categoria]).padStart(4, "0");
+    state.productos.push({
+      id: crypto.randomUUID(),
+      nombre, categoria, medida, precio, costo, stock, minimo, barras, codigo, estrategia
+    });
+    guardar();
+    mostrarToast("Producto guardado: " + codigo);
+    limpiarFormularioProducto();
+  }
+  renderInventario();
+}
+
+function limpiarFormularioProducto() {
+  document.getElementById("pNombre").value = "";
+  document.getElementById("pPrecio").value = "";
+  document.getElementById("pCosto").value = "";
+  document.getElementById("pStock").value = "";
+  document.getElementById("pMinimo").value = "";
+  document.getElementById("pBarras").value = "";
+  document.getElementById("pEstrategia").value = "normal";
+}
+
+function editarProducto(id) {
+  const prod = state.productos.find(p => p.id === id);
+  if (!prod) return;
+  editandoId = id;
+  document.getElementById("pNombre").value = prod.nombre;
+  document.getElementById("pCategoria").value = prod.categoria;
+  document.getElementById("pMedida").value = prod.medida;
+  document.getElementById("pPrecio").value = prod.precio;
+  document.getElementById("pCosto").value = prod.costo || "";
+  document.getElementById("pStock").value = prod.stock;
+  document.getElementById("pMinimo").value = prod.minimo || "";
+  document.getElementById("pBarras").value = prod.barras || "";
+  document.getElementById("pEstrategia").value = prod.estrategia || "normal";
+  document.getElementById("formProductoTitulo").textContent = "Editando: " + prod.codigo;
+  document.getElementById("btnGuardarProducto").textContent = "Guardar cambios";
+  document.getElementById("btnCancelarEdicion").style.display = "block";
+  document.getElementById("view-productos").scrollIntoView({ behavior: "smooth" });
+}
+
+function cancelarEdicion() {
+  editandoId = null;
+  limpiarFormularioProducto();
+  document.getElementById("formProductoTitulo").textContent = "Nuevo producto";
+  document.getElementById("btnGuardarProducto").textContent = "Guardar producto";
+  document.getElementById("btnCancelarEdicion").style.display = "none";
+}
+
+function catLabel(cat) { return cat === "ABA" ? "Abarrotes" : "Papelería"; }
+function catBadgeClass(cat) { return cat === "ABA" ? "badge-aba" : "badge-pap"; }
+function estrategiaLabel(e) {
+  return { normal: "Normal", gancho: "Gancho", margen: "Margen alto", impulso: "Impulso", promocion: "Promoción" }[e] || "Normal";
+}
+
+function renderInventario() {
+  const q = (document.getElementById("invBuscar").value || "").toLowerCase();
+  const cont = document.getElementById("invLista");
+  const items = state.productos.filter(p =>
+    !q || p.nombre.toLowerCase().includes(q) || p.codigo.toLowerCase().includes(q) ||
+    (p.barras && p.barras.includes(q)) || catLabel(p.categoria).toLowerCase().includes(q)
+  );
+  if (!items.length) {
+    cont.innerHTML = '<div class="empty">Sin productos que coincidan</div>';
+    return;
+  }
+  cont.innerHTML = items.map(p => {
+    const margen = p.precio - (p.costo || 0);
+    const margenPct = p.precio > 0 ? Math.round((margen / p.precio) * 100) : 0;
+    return `
+    <div class="prod">
+      <div class="info">
+        <div class="name">${escapeHtml(p.nombre)}</div>
+        <div class="meta">
+          <span class="badge ${catBadgeClass(p.categoria)}">${catLabel(p.categoria)}</span>
+          <span class="badge badge-estrategia">${estrategiaLabel(p.estrategia)}</span><br>
+          ${p.codigo} · Stock: <span class="${p.stock <= p.minimo && p.minimo > 0 ? 'stock-low' : ''}">${p.stock} ${p.medida}</span>
+        </div>
+        <div class="margen-tag">Margen: ${moneda(margen)} (${margenPct}%)</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <div class="price">${moneda(p.precio)}</div>
+        <button class="btn btn-outline btn-sm" onclick="editarProducto('${p.id}')">Editar</button>
+      </div>
+    </div>
+  `;
+  }).join("");
+
+  renderReabastecer();
+}
+document.getElementById("invBuscar").addEventListener("input", renderInventario);
+
+function renderReabastecer() {
+  const cont = document.getElementById("reabastecerLista");
+  const vacio = document.getElementById("reabastecerVacio");
+  const bajos = state.productos.filter(p => p.minimo > 0 && p.stock <= p.minimo);
+  if (!bajos.length) { cont.innerHTML = ""; vacio.style.display = "block"; return; }
+  vacio.style.display = "none";
+  cont.innerHTML = bajos.map(p => `
+    <div class="prod">
+      <div class="info">
+        <div class="name">${escapeHtml(p.nombre)}</div>
+        <div class="meta">${p.codigo} · Mínimo: ${p.minimo} ${p.medida}</div>
+      </div>
+      <div class="price stock-low">${p.stock} ${p.medida}</div>
+    </div>
+  `).join("");
+}
+
+/* ---------- Venta / carrito ---------- */
+let carrito = [];
+let editandoId = null;
+
+function buscarProductosVenta(q) {
+  q = q.toLowerCase();
+  return state.productos.filter(p =>
+    p.nombre.toLowerCase().includes(q) || p.codigo.toLowerCase().includes(q) ||
+    (p.barras && p.barras.includes(q))
+  ).slice(0, 8);
+}
+
+document.getElementById("ventaBuscar").addEventListener("input", (e) => {
+  const q = e.target.value.trim();
+  const cont = document.getElementById("ventaResultados");
+  if (!q) { cont.innerHTML = ""; return; }
+  const res = buscarProductosVenta(q);
+  if (!res.length) { cont.innerHTML = '<div class="empty">No se encontró ese producto</div>'; return; }
+  cont.innerHTML = res.map(p => `
+    <div class="prod">
+      <div class="info">
+        <div class="name">${escapeHtml(p.nombre)}</div>
+        <div class="meta">${p.codigo} · Stock: ${p.stock} ${p.medida}</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <div class="price">${moneda(p.precio)}</div>
+        <button class="btn btn-secondary btn-sm" onclick="agregarAlCarrito('${p.id}')">Agregar</button>
+      </div>
+    </div>
+  `).join("");
+});
+
+function agregarAlCarrito(id) {
+  const prod = state.productos.find(p => p.id === id);
+  if (!prod) return;
+  const existente = carrito.find(i => i.id === id);
+  if (existente) {
+    existente.cantidad += 1;
+  } else {
+    carrito.push({ id: prod.id, nombre: prod.nombre, precio: prod.precio, cantidad: 1, stockDisponible: prod.stock });
+  }
+  document.getElementById("ventaBuscar").value = "";
+  document.getElementById("ventaResultados").innerHTML = "";
+  renderCarrito();
+  mostrarToast(prod.nombre + " agregado");
+}
+
+function cambiarCantidad(id, delta) {
+  const item = carrito.find(i => i.id === id);
+  if (!item) return;
+  item.cantidad += delta;
+  if (item.cantidad <= 0) carrito = carrito.filter(i => i.id !== id);
+  renderCarrito();
+}
+
+function renderCarrito() {
+  const cont = document.getElementById("carritoLista");
+  const vacio = document.getElementById("carritoVacio");
+  const bar = document.getElementById("cartBar");
+  if (!carrito.length) {
+    cont.innerHTML = "";
+    vacio.style.display = "block";
+    bar.style.display = "none";
+    cerrarPago();
+    return;
+  }
+  vacio.style.display = "none";
+  bar.style.display = "flex";
+  cont.innerHTML = carrito.map(i => `
+    <div class="prod">
+      <div class="info">
+        <div class="name">${escapeHtml(i.nombre)}</div>
+        <div class="meta">${moneda(i.precio)} c/u</div>
+      </div>
+      <div class="qty-ctrl">
+        <button onclick="cambiarCantidad('${i.id}', -1)">−</button>
+        <span>${i.cantidad}</span>
+        <button onclick="cambiarCantidad('${i.id}', 1)">+</button>
+      </div>
+    </div>
+  `).join("");
+  const total = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
+  document.getElementById("cartTotal").textContent = total.toFixed(2);
+}
+
+function abrirCobro() {
+  if (!carrito.length) return;
+  const total = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
+  document.getElementById("pagoTotal").textContent = moneda(total);
+  document.getElementById("pagoCard").style.display = "block";
+  document.getElementById("pagoCard").scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function mostrarPagoEfectivo() {
+  document.getElementById("efectivoBox").style.display = "block";
+  document.getElementById("pagoRecibido").value = "";
+  document.getElementById("cambioBox").style.display = "none";
+  document.getElementById("pagoRecibido").focus();
+}
+
+function calcularCambio() {
+  const total = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
+  const recibido = parseFloat(document.getElementById("pagoRecibido").value);
+  const box = document.getElementById("cambioBox");
+  const el = document.getElementById("pagoCambio");
+
+  if (isNaN(recibido)) {
+    box.style.display = "none";
+    return;
+  }
+
+  box.style.display = "block";
+  if (recibido < total) {
+    el.textContent = "Faltan " + moneda(total - recibido);
+    box.style.background = "var(--amber-soft)";
+    box.style.color = "var(--amber)";
+  } else {
+    el.textContent = moneda(recibido - total);
+    box.style.background = "var(--green-soft)";
+    box.style.color = "var(--green)";
+  }
+}
+
+function cerrarPago() {
+  document.getElementById("pagoCard").style.display = "none";
+  const efectivoBox = document.getElementById("efectivoBox");
+  if (efectivoBox) efectivoBox.style.display = "none";
+  const pagoRecibido = document.getElementById("pagoRecibido");
+  if (pagoRecibido) pagoRecibido.value = "";
+  const cambioBox = document.getElementById("cambioBox");
+  if (cambioBox) cambioBox.style.display = "none";
+}
+
+function cobrar(pago) {
+  const total = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
+  const cliente = document.getElementById("pagoCliente").value.trim();
+  let recibido = null;
+  let cambio = null;
+
+  if (pago === "efectivo") {
+    recibido = parseFloat(document.getElementById("pagoRecibido").value);
+    if (isNaN(recibido) || recibido < total) {
+      mostrarToast(isNaN(recibido) ? "Indica cuánto paga el cliente" : "El pago es menor al total");
+      return;
+    }
+    cambio = recibido - total;
+  }
+
+
+  if (pago === "fiado" && !cliente) {
+    mostrarToast("Escribe el nombre del cliente para registrar el fiado");
+    return;
+  }
+
+  // descuenta stock y toma el costo actual de cada producto para la venta
+  const items = carrito.map(i => {
+    const prod = state.productos.find(p => p.id === i.id);
+    if (prod) prod.stock = Math.max(0, (prod.stock || 0) - i.cantidad);
+    return { id: i.id, nombre: i.nombre, cantidad: i.cantidad, precio: i.precio, costo: (prod && prod.costo) || 0 };
+  });
+  const venta = { id: crypto.randomUUID(), fecha: new Date().toISOString(), items, total, pago, cliente: cliente || null, recibido, cambio };
+
+  // el historial cuenta la venta siempre (para reportes/ganancia); "ventas" (corte de caja)
+  // solo recibe el dinero que realmente entró — el fiado se registra aparte en "creditos"
+  state.historial.push(venta);
+  if (pago === 
