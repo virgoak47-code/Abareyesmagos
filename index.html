@@ -522,12 +522,25 @@
 
   <!-- FIADO -->
   <section class="view" id="view-fiado">
-    <div class="card">
-      <h2>Cuentas por cobrar</h2>
-      <div class="kv"><span class="label">Total pendiente</span><span id="fiadoTotalPendiente" style="font-weight:800; font-size:17px;">$0.00</span></div>
+    <div class="card" style="background:linear-gradient(135deg,#7C2D12,#9A3412); color:#fff; border:0;">
+      <div style="font-size:24px; font-weight:900;">📝 Fiado</div>
+      <div style="margin-top:4px; opacity:.85; font-size:13px;">Controla lo que tus clientes tienen pendiente</div>
     </div>
+
+    <div class="stat-grid-4">
+      <div class="stat-card orange"><div class="lbl">💰 Pendiente</div><div class="val" id="fiadoTotalPendiente">$0.00</div></div>
+      <div class="stat-card purple"><div class="lbl">👥 Clientes</div><div class="val" id="fiadoClientes">0</div></div>
+      <div class="stat-card blue"><div class="lbl">🧾 Cuentas</div><div class="val" id="fiadoCuentas">0</div></div>
+      <div class="stat-card green"><div class="lbl">💵 Cobrado hoy</div><div class="val" id="fiadoCobradoHoy">$0.00</div></div>
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+      <h2>🔎 Buscar cliente</h2>
+      <input id="fiadoBuscar" placeholder="Escribe el nombre del cliente" autocomplete="off">
+    </div>
+
     <div class="card">
-      <h2>Por cliente</h2>
+      <h2>👥 Clientes con saldo pendiente</h2>
       <div class="prod-list" id="fiadoLista"></div>
       <div class="empty" id="fiadoVacio">No hay ventas a crédito pendientes</div>
     </div>
@@ -1698,62 +1711,102 @@ function imprimirTicket() {
 
 /* ---------- Fiado ---------- */
 function renderFiado() {
-  const pendientes = state.creditos.filter(c => !c.pagado);
-  const totalPendiente = pendientes.reduce((s, c) => s + c.monto, 0);
-  document.getElementById("fiadoTotalPendiente").textContent = moneda(totalPendiente);
+  const creditos = Array.isArray(state.creditos) ? state.creditos : [];
+  const pendientes = creditos.filter(c => !c.pagado);
+  const totalPendiente = pendientes.reduce((s, c) => s + (Number(c.monto) || 0), 0);
+  const clientesPendientes = new Set(pendientes.map(c => String(c.cliente || "").trim().toLowerCase()).filter(Boolean));
+  const hoy = fechaClaveLocal(new Date());
+  const cobradoHoy = (state.ventas || []).filter(v => v.esCobroFiado && fechaClaveLocal(v.fecha) === hoy)
+    .reduce((s, v) => s + (Number(v.total) || 0), 0);
 
+  document.getElementById("fiadoTotalPendiente").textContent = moneda(totalPendiente);
+  document.getElementById("fiadoClientes").textContent = clientesPendientes.size;
+  document.getElementById("fiadoCuentas").textContent = pendientes.length;
+  document.getElementById("fiadoCobradoHoy").textContent = moneda(cobradoHoy);
+
+  const filtro = (document.getElementById("fiadoBuscar")?.value || "").trim().toLowerCase();
   const porCliente = {};
   pendientes.forEach(c => {
-    if (!porCliente[c.cliente]) porCliente[c.cliente] = [];
-    porCliente[c.cliente].push(c);
+    const nombre = String(c.cliente || "Sin nombre").trim() || "Sin nombre";
+    if (filtro && !nombre.toLowerCase().includes(filtro)) return;
+    if (!porCliente[nombre]) porCliente[nombre] = [];
+    porCliente[nombre].push(c);
   });
 
   const cont = document.getElementById("fiadoLista");
   const vacio = document.getElementById("fiadoVacio");
-  const clientes = Object.keys(porCliente);
-  if (!clientes.length) { cont.innerHTML = ""; vacio.style.display = "block"; return; }
+  const clientes = Object.keys(porCliente).sort((a,b) => a.localeCompare(b, "es"));
+  if (!clientes.length) {
+    cont.innerHTML = "";
+    vacio.style.display = "block";
+    vacio.textContent = filtro ? "No encontramos clientes con ese nombre" : "No hay ventas a crédito pendientes";
+    return;
+  }
   vacio.style.display = "none";
-  cont.innerHTML = clientes.map(nombre => {
-    const deudas = porCliente[nombre];
-    const totalCliente = deudas.reduce((s, c) => s + c.monto, 0);
-    const detalle = deudas.map(c =>
-      `<div class="kv" style="padding:3px 0;">
-        <span class="label">${new Date(c.fecha).toLocaleDateString("es-MX")}</span>
-        <span>${moneda(c.monto)}
-          <button class="btn btn-outline btn-sm" style="margin-left:6px;" onclick="marcarPagado('${c.id}')">Pagó</button>
-        </span>
-      </div>`
-    ).join("");
-    return `
-      <div class="prod" style="flex-direction:column; align-items:stretch;">
-        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-          <div class="name">${escapeHtml(nombre)}</div>
-          <div class="price">${moneda(totalCliente)}</div>
+
+  cont.innerHTML = clientes.map((nombre, idx) => {
+    const deudas = porCliente[nombre].slice().sort((a,b) => String(a.fecha).localeCompare(String(b.fecha)));
+    const totalCliente = deudas.reduce((s, c) => s + (Number(c.monto) || 0), 0);
+    const detalle = deudas.map(c => {
+      const fecha = new Date(c.fecha).toLocaleDateString("es-MX", {day:"2-digit", month:"short", year:"numeric"});
+      return `<div style="border-top:1px solid var(--line); padding:9px 0 2px;">
+        <div style="display:flex; justify-content:space-between; gap:8px; align-items:center;">
+          <div class="label" style="margin:0;">${fecha}</div>
+          <strong>${moneda(c.monto)}</strong>
         </div>
-        ${detalle}
+        <div class="row" style="margin-top:6px; align-items:center;">
+          <select id="fiadoMetodo_${c.id}" aria-label="Forma de pago de ${escapeHtml(nombre)}">
+            <option value="efectivo">💵 Efectivo</option>
+            <option value="tarjeta">💳 Tarjeta</option>
+            <option value="transferencia">📲 Transferencia</option>
+          </select>
+          <button class="btn btn-success btn-sm" onclick="marcarPagado('${c.id}')">✅ Registrar pago</button>
+        </div>
+      </div>`;
+    }).join("");
+    return `<div class="prod" style="flex-direction:column; align-items:stretch;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+        <div>
+          <div class="name">👤 ${escapeHtml(nombre)}</div>
+          <div class="meta">${deudas.length} cuenta${deudas.length === 1 ? "" : "s"} pendiente${deudas.length === 1 ? "" : "s"}</div>
+        </div>
+        <div class="price">${moneda(totalCliente)}</div>
       </div>
-    `;
+      ${detalle}
+    </div>`;
   }).join("");
 }
 
 function marcarPagado(creditoId) {
   const credito = state.creditos.find(c => c.id === creditoId);
-  if (!credito) return;
+  if (!credito || credito.pagado) return;
+  const metodoEl = document.getElementById("fiadoMetodo_" + creditoId);
+  const pago = metodoEl ? metodoEl.value : "efectivo";
+  const metodoTexto = { efectivo:"efectivo", tarjeta:"tarjeta", transferencia:"transferencia" }[pago] || "efectivo";
+  const ok = confirm("¿Registrar como pagado el saldo de " + moneda(credito.monto) + " de " + credito.cliente + " por " + metodoTexto + "?");
+  if (!ok) return;
+
   credito.pagado = true;
-  // el dinero cobrado ahora sí entra a caja como efectivo (ajústalo si te lo dieron por otro medio)
+  // El cobro no es una nueva venta: entra a caja y se registra como movimiento para el corte.
   state.ventas.push({
     id: crypto.randomUUID(),
     fecha: new Date().toISOString(),
     items: [],
-    total: credito.monto,
-    pago: "efectivo",
+    total: Number(credito.monto) || 0,
+    pago,
     esCobroFiado: true,
-    cliente: credito.cliente
+    cliente: credito.cliente,
+    creditoId: credito.id
   });
   guardar();
-  mostrarToast("Marcado como pagado: " + credito.cliente);
+  mostrarToast("Pago registrado: " + moneda(credito.monto));
   renderFiado();
+  renderCaja();
+  renderInicio();
 }
+
+const fiadoBuscarEl = document.getElementById("fiadoBuscar");
+if (fiadoBuscarEl) fiadoBuscarEl.addEventListener("input", renderFiado);
 
 /* ---------- Recibir compra ---------- */
 async function buscarParaCompra() {
