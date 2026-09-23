@@ -724,26 +724,60 @@
 
   <!-- REPORTES -->
   <section class="view" id="view-reportes">
+    <div class="card" style="background:linear-gradient(135deg,#111827,#1e293b); color:#fff; border:0;">
+      <div style="display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap;">
+        <div>
+          <div style="font-size:24px; font-weight:900;">📊 Reportes</div>
+          <div id="repFecha" style="margin-top:4px; opacity:.82; font-size:13px;">Resumen de ventas</div>
+        </div>
+        <button class="btn btn-secondary" style="background:#fff; color:#111827; border:0;" onclick="renderReportes()">🔄 Actualizar</button>
+      </div>
+    </div>
+
     <div class="card">
-      <h2>Resumen general</h2>
+      <h2>📊 Resumen de hoy</h2>
+      <div class="stat-grid">
+        <div class="stat-mini"><div class="ic" style="background:rgba(37,99,235,0.12); color:var(--red);">🧾</div><div class="val" id="repHoyVentas">0</div><div class="lbl">Ventas de hoy</div></div>
+        <div class="stat-mini"><div class="ic" style="background:var(--green-soft); color:var(--green);">💵</div><div class="val" id="repHoyIngresos">$0.00</div><div class="lbl">Ingresos de hoy</div></div>
+        <div class="stat-mini"><div class="ic" style="background:var(--purple-soft); color:var(--purple);">📦</div><div class="val" id="repHoyArticulos">0</div><div class="lbl">Artículos vendidos</div></div>
+        <div class="stat-mini"><div class="ic" style="background:rgba(245,158,11,0.12); color:#b45309;">🎟️</div><div class="val" id="repHoyTicket">$0.00</div><div class="lbl">Ticket promedio</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>💳 Forma de pago de hoy</h2>
+      <div class="kv"><span class="label">💵 Efectivo</span><span id="repPagoEfectivo">$0.00</span></div>
+      <div class="kv"><span class="label">💳 Tarjeta</span><span id="repPagoTarjeta">$0.00</span></div>
+      <div class="kv"><span class="label">📲 Transferencia</span><span id="repPagoTransferencia">$0.00</span></div>
+      <div class="kv"><span class="label">📝 Fiado</span><span id="repPagoFiado">$0.00</span></div>
+    </div>
+
+    <div class="card">
+      <h2>📈 Resumen general</h2>
       <div class="stat-grid">
         <div class="stat-mini"><div class="ic" style="background:rgba(37,99,235,0.12); color:var(--red);">🧾</div><div class="val" id="repNumVentas">0</div><div class="lbl">Ventas totales</div></div>
         <div class="stat-mini"><div class="ic" style="background:var(--green-soft); color:var(--green);">💵</div><div class="val" id="repIngresos">$0.00</div><div class="lbl">Ingresos</div></div>
-        <div class="stat-mini"><div class="ic" style="background:var(--purple-soft); color:var(--purple);">📈</div><div class="val" id="repGanancia">$0.00</div><div class="lbl">Ganancia</div></div>
+        <div class="stat-mini"><div class="ic" style="background:var(--purple-soft); color:var(--purple);">📈</div><div class="val" id="repGanancia">$0.00</div><div class="lbl">Ganancia estimada</div></div>
       </div>
       <div class="hint">La ganancia se calcula con el costo que tenía guardado cada producto al momento de venderse. Si un producto no tiene costo registrado, se cuenta como $0 de costo.</div>
     </div>
 
     <div class="card">
-      <h2>Ventas por día (últimos 14 días)</h2>
+      <h2>📅 Ventas por día (últimos 14 días)</h2>
       <table id="repDias"><thead><tr><th>Día</th><th>Ventas</th><th>Total</th></tr></thead><tbody></tbody></table>
       <div class="empty" id="repDiasVacio">Aún no hay ventas registradas</div>
     </div>
 
     <div class="card">
-      <h2>Productos más vendidos</h2>
+      <h2>🏆 Productos más vendidos</h2>
       <table id="repTop"><thead><tr><th>Producto</th><th>Unidades</th><th>Ingresos</th></tr></thead><tbody></tbody></table>
       <div class="empty" id="repTopVacio">Aún no hay ventas registradas</div>
+    </div>
+
+    <div class="card">
+      <h2>⚠️ Poco stock</h2>
+      <table id="repStock"><thead><tr><th>Producto</th><th>Stock</th><th>Mínimo</th></tr></thead><tbody></tbody></table>
+      <div class="empty" id="repStockVacio">No hay productos por reabastecer</div>
     </div>
   </section>
 
@@ -1944,29 +1978,67 @@ function hacerCorte() {
 }
 
 /* ---------- Reportes ---------- */
-function renderReportes() {
-  const historial = state.historial;
+function fechaClaveLocal(fecha) {
+  const d = fecha instanceof Date ? fecha : new Date(fecha);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const dia = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${dia}`;
+}
 
+function renderReportes() {
+  const historial = Array.isArray(state.historial) ? state.historial : [];
+  const ahora = new Date();
+  const hoy = fechaClaveLocal(ahora);
+  const fechaEl = document.getElementById("repFecha");
+  if (fechaEl) {
+    fechaEl.textContent = "Reporte actualizado · " + ahora.toLocaleDateString("es-MX", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
+  }
+  const ventasHoy = historial.filter(v => fechaClaveLocal(v.fecha) === hoy);
+
+  // Resumen de hoy
+  const ingresosHoy = ventasHoy.reduce((s, v) => s + (Number(v.total) || 0), 0);
+  const articulosHoy = ventasHoy.reduce((s, v) =>
+    s + (v.items || []).reduce((si, i) => si + (Number(i.cantidad) || 0), 0), 0);
+  const ticketPromedio = ventasHoy.length ? ingresosHoy / ventasHoy.length : 0;
+
+  document.getElementById("repHoyVentas").textContent = ventasHoy.length;
+  document.getElementById("repHoyIngresos").textContent = moneda(ingresosHoy);
+  document.getElementById("repHoyArticulos").textContent = articulosHoy;
+  document.getElementById("repHoyTicket").textContent = moneda(ticketPromedio);
+
+  // Formas de pago de hoy
+  const pagos = { efectivo: 0, tarjeta: 0, transferencia: 0, fiado: 0 };
+  ventasHoy.forEach(v => {
+    if (Object.prototype.hasOwnProperty.call(pagos, v.pago)) pagos[v.pago] += Number(v.total) || 0;
+  });
+  document.getElementById("repPagoEfectivo").textContent = moneda(pagos.efectivo);
+  document.getElementById("repPagoTarjeta").textContent = moneda(pagos.tarjeta);
+  document.getElementById("repPagoTransferencia").textContent = moneda(pagos.transferencia);
+  document.getElementById("repPagoFiado").textContent = moneda(pagos.fiado);
+
+  // Resumen histórico
   document.getElementById("repNumVentas").textContent = historial.length;
-  const ingresos = historial.reduce((s, v) => s + v.total, 0);
+  const ingresos = historial.reduce((s, v) => s + (Number(v.total) || 0), 0);
   const ganancia = historial.reduce((s, v) =>
-    s + v.items.reduce((si, i) => si + (i.precio - (i.costo || 0)) * i.cantidad, 0), 0);
+    s + (v.items || []).reduce((si, i) => si + ((Number(i.precio) || 0) - (Number(i.costo) || 0)) * (Number(i.cantidad) || 0), 0), 0);
   document.getElementById("repIngresos").textContent = moneda(ingresos);
   document.getElementById("repGanancia").textContent = moneda(ganancia);
 
-  // ventas por día, últimos 14 días
+  // Ventas por día, últimos 14 días con actividad
   const porDia = {};
   historial.forEach(v => {
-    const dia = v.fecha.slice(0, 10);
+    const dia = fechaClaveLocal(v.fecha);
     if (!porDia[dia]) porDia[dia] = { num: 0, total: 0 };
     porDia[dia].num += 1;
-    porDia[dia].total += v.total;
+    porDia[dia].total += Number(v.total) || 0;
   });
   const dias = Object.keys(porDia).sort().reverse().slice(0, 14);
   const tbodyDias = document.querySelector("#repDias tbody");
   const diasVacio = document.getElementById("repDiasVacio");
   if (!dias.length) {
-    tbodyDias.innerHTML = ""; diasVacio.style.display = "block";
+    tbodyDias.innerHTML = "";
+    diasVacio.style.display = "block";
   } else {
     diasVacio.style.display = "none";
     tbodyDias.innerHTML = dias.map(d => `
@@ -1978,18 +2050,19 @@ function renderReportes() {
     `).join("");
   }
 
-  // top productos por unidades vendidas
+  // Top productos por unidades vendidas
   const porProducto = {};
-  historial.forEach(v => v.items.forEach(i => {
+  historial.forEach(v => (v.items || []).forEach(i => {
     if (!porProducto[i.id]) porProducto[i.id] = { nombre: i.nombre, unidades: 0, ingresos: 0 };
-    porProducto[i.id].unidades += i.cantidad;
-    porProducto[i.id].ingresos += i.precio * i.cantidad;
+    porProducto[i.id].unidades += Number(i.cantidad) || 0;
+    porProducto[i.id].ingresos += (Number(i.precio) || 0) * (Number(i.cantidad) || 0);
   }));
   const top = Object.values(porProducto).sort((a, b) => b.unidades - a.unidades).slice(0, 10);
   const tbodyTop = document.querySelector("#repTop tbody");
   const topVacio = document.getElementById("repTopVacio");
   if (!top.length) {
-    tbodyTop.innerHTML = ""; topVacio.style.display = "block";
+    tbodyTop.innerHTML = "";
+    topVacio.style.display = "block";
   } else {
     topVacio.style.display = "none";
     tbodyTop.innerHTML = top.map(p => `
@@ -1997,6 +2070,26 @@ function renderReportes() {
         <td>${escapeHtml(p.nombre)}</td>
         <td>${p.unidades}</td>
         <td>${moneda(p.ingresos)}</td>
+      </tr>
+    `).join("");
+  }
+
+  // Productos con stock igual o menor al mínimo configurado
+  const pocoStock = (Array.isArray(state.productos) ? state.productos : [])
+    .filter(p => productoActivo(p) && Number(p.minimo) > 0 && Number(p.stock) <= Number(p.minimo))
+    .sort((a, b) => Number(a.stock) - Number(b.stock));
+  const tbodyStock = document.querySelector("#repStock tbody");
+  const stockVacio = document.getElementById("repStockVacio");
+  if (!pocoStock.length) {
+    tbodyStock.innerHTML = "";
+    stockVacio.style.display = "block";
+  } else {
+    stockVacio.style.display = "none";
+    tbodyStock.innerHTML = pocoStock.map(p => `
+      <tr>
+        <td>${escapeHtml(p.nombre)}</td>
+        <td style="font-weight:800;">${Number(p.stock) || 0}</td>
+        <td>${Number(p.minimo) || 0}</td>
       </tr>
     `).join("");
   }
