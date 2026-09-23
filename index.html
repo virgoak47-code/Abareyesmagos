@@ -353,6 +353,21 @@
 </head>
 <body>
 
+<!-- LOGIN -->
+<div id="loginScreen" style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; background:var(--navy);">
+  <div class="card" style="max-width:360px; width:100%;">
+    <h2 style="text-align:center;">👑 Los Reyes Magos</h2>
+    <div class="hint" style="text-align:center; margin-bottom:10px;">Inicia sesión con la cuenta de la tienda</div>
+    <label for="loginEmail">Correo</label>
+    <input id="loginEmail" type="email" placeholder="correo@ejemplo.com" autocomplete="username">
+    <label for="loginPass">Contraseña</label>
+    <input id="loginPass" type="password" placeholder="••••••••" autocomplete="current-password">
+    <div id="loginError" class="hint" style="color:var(--red); display:none;"></div>
+    <button class="btn btn-primary" id="loginBtn" onclick="iniciarSesion()">Entrar</button>
+  </div>
+</div>
+
+<div id="appShell" style="display:none;">
 <header>
   <div style="display:flex; justify-content:space-between; align-items:flex-start;">
     <div>
@@ -490,6 +505,11 @@
 
   <!-- AJUSTES -->
   <section class="view" id="view-ajustes">
+    <div class="card">
+      <h2>Cuenta</h2>
+      <div class="hint">Sesión iniciada con la cuenta compartida de la tienda. Los datos se sincronizan automáticamente entre los celulares conectados.</div>
+      <button class="btn btn-outline" onclick="cerrarSesion()">Cerrar sesión</button>
+    </div>
     <div class="card">
       <h2>Modo empleado</h2>
       <div class="hint">Cuando alguien más atienda la tienda, cambia a modo empleado: solo verá "Vender" y "Fiado", sin acceso a precios, reportes ni corte de caja.</div>
@@ -689,11 +709,86 @@
   <div class="scan-status" id="scanStatus">Apunta la cámara al código de barras</div>
 </div>
 
+</div><!-- /appShell -->
+
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
+/* ---------- Firebase ---------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyD_Y5iv_m1LRNfGWnCexyCIVAQm7KormpM",
+  authDomain: "reyes-magos-pos.firebaseapp.com",
+  projectId: "reyes-magos-pos",
+  storageBucket: "reyes-magos-pos.firebasestorage.app",
+  messagingSenderId: "580492771925",
+  appId: "1:580492771925:web:abdf93ff57339cf4b94adc"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const DOC_REF = db.collection("tienda").doc("reyesmagos");
+let cargaInicialLista = false;
+let guardando = false;
+let pendienteGuardar = false;
+
+function iniciarSesion() {
+  const email = document.getElementById("loginEmail").value.trim();
+  const pass = document.getElementById("loginPass").value;
+  const errBox = document.getElementById("loginError");
+  errBox.style.display = "none";
+  if (!email || !pass) { errBox.textContent = "Ingresa correo y contraseña"; errBox.style.display = "block"; return; }
+  document.getElementById("loginBtn").textContent = "Entrando...";
+  auth.signInWithEmailAndPassword(email, pass).catch((err) => {
+    document.getElementById("loginBtn").textContent = "Entrar";
+    errBox.textContent = "No se pudo entrar: correo o contraseña incorrectos";
+    errBox.style.display = "block";
+  });
+}
+
+function cerrarSesion() {
+  auth.signOut();
+}
+
+auth.onAuthStateChanged((user) => {
+  if (user) {
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("appShell").style.display = "block";
+    escucharEstado();
+  } else {
+    cargaInicialLista = false;
+    document.getElementById("appShell").style.display = "none";
+    document.getElementById("loginScreen").style.display = "flex";
+    document.getElementById("loginBtn").textContent = "Entrar";
+  }
+});
+
+function escucharEstado() {
+  DOC_REF.onSnapshot((snap) => {
+    if (snap.exists) {
+      state = Object.assign(estadoInicial(), snap.data());
+    } else {
+      state = estadoInicial();
+      DOC_REF.set(state);
+    }
+    cargaInicialLista = true;
+    renderInventario();
+    renderCaja();
+    renderCompras();
+    renderInicio();
+    aplicarRol();
+    const activo = document.querySelector(".view.active");
+    if (activo && activo.id === "view-fiado") renderFiado();
+    if (activo && activo.id === "view-reportes") renderReportes();
+  }, (err) => {
+    console.error("Error escuchando Firestore", err);
+    mostrarToast("Sin conexión con la nube, revisa tu internet");
+  });
+}
+
 /* ---------- Estado y almacenamiento ---------- */
-const LS_KEY = "reyesmagos_pos_v1";
-let state = cargarEstado();
+let state = estadoInicial();
 
 function estadoInicial() {
   return {
@@ -708,25 +803,19 @@ function estadoInicial() {
   };
 }
 
-function cargarEstado() {
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    if (!raw) return estadoInicial();
-    const parsed = JSON.parse(raw);
-    return Object.assign(estadoInicial(), parsed);
-  } catch (e) {
-    console.error("No se pudo leer el almacenamiento local", e);
-    return estadoInicial();
-  }
-}
-
 function guardar() {
-  try {
-    localStorage.setItem(LS_KEY, JSON.stringify(state));
-  } catch (e) {
-    console.error("No se pudo guardar", e);
-    mostrarToast("No se pudo guardar. Revisa el almacenamiento del navegador.");
-  }
+  if (!cargaInicialLista) return;
+  if (guardando) { pendienteGuardar = true; return; }
+  guardando = true;
+  DOC_REF.set(state)
+    .catch((e) => {
+      console.error("No se pudo guardar en la nube", e);
+      mostrarToast("No se pudo guardar. Revisa tu conexión.");
+    })
+    .finally(() => {
+      guardando = false;
+      if (pendienteGuardar) { pendienteGuardar = false; guardar(); }
+    });
 }
 
 function moneda(n) {
