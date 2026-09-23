@@ -291,6 +291,28 @@
   .caja-status { padding:10px 12px; border-radius:10px; margin-bottom:12px; font-size:13px; font-weight:700; }
   .caja-status.open { background:var(--green-soft); color:var(--green); }
   .caja-status.closed { background:var(--amber-soft); color:var(--amber); }
+
+  .corte-historico { border-left: 4px solid var(--red); }
+  .corte-historico-head { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+  .corte-fecha { font-weight:800; font-size:14px; }
+  .corte-detalle-btn { flex:none; margin-top:0; }
+  .corte-resumen-grid { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:12px; }
+  .corte-dato { background:var(--cream); border:1px solid var(--line); border-radius:9px; padding:9px; display:flex; flex-direction:column; gap:3px; }
+  .corte-dato span { color:var(--ink-soft); font-size:11px; }
+  .corte-dato strong { font-size:14px; }
+  .corte-resultado { margin-top:9px; padding:10px; border-radius:9px; text-align:center; font-weight:800; font-size:13px; }
+  .corte-resultado.cuadrada { background:var(--green-soft); color:var(--green); }
+  .corte-resultado.faltante { background:#FEE2E2; color:var(--red-dark); }
+  .corte-resultado.sobrante { background:var(--green-soft); color:var(--green); }
+  .corte-detalle-panel { margin-top:10px; padding-top:11px; border-top:1px solid var(--line); }
+  .corte-detalle-title { font-size:12px; font-weight:800; margin:9px 0 6px; }
+  .corte-pago-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; }
+  .corte-pago-grid > div { background:var(--cream); border:1px solid var(--line); border-radius:8px; padding:8px; }
+  .corte-pago-grid span { display:block; color:var(--ink-soft); font-size:10.5px; }
+  .corte-pago-grid strong { display:block; margin-top:3px; font-size:13px; }
+  .corte-total-retiros { border-top:1px solid var(--line); margin-top:6px; padding-top:7px; }
+  @media (max-width:430px) { .corte-historico-head { flex-direction:column; } .corte-detalle-btn { width:100%; } .corte-pago-grid { grid-template-columns:1fr; } }
+
   .empty {
     text-align: center;
     color: var(--ink-soft);
@@ -936,6 +958,15 @@ function mostrarToast(msg) {
 
 /* ---------- Navegación ---------- */
 function irAVista(vista) {
+  // Seguridad de navegación: el modo empleado no puede abrir vistas de dueño
+  // aunque se intente llamar la función directamente desde la consola o un botón oculto.
+  const vistasSoloDueno = ["productos", "compras", "caja", "reportes", "ajustes"];
+  const esEmpleado = state.config && state.config.rolActual === "empleado";
+  if (esEmpleado && vistasSoloDueno.includes(vista)) {
+    mostrarToast("Acceso restringido: solo el dueño puede entrar aquí");
+    vista = "vender";
+  }
+
   document.querySelectorAll("nav button[data-view]").forEach(b => b.classList.remove("active"));
   const navBtn = document.querySelector('nav button[data-view="' + vista + '"]');
   if (navBtn) navBtn.classList.add("active");
@@ -1937,16 +1968,46 @@ function renderCaja() {
   const cortes = (state.cortes || []).slice().reverse();
   if (!cortes.length) { cont.innerHTML = ""; vacio.style.display = "block"; return; }
   vacio.style.display = "none";
-  cont.innerHTML = cortes.map(c => `
-    <div class="card" style="margin-bottom:8px; padding:10px;">
-      <div style="font-weight:700;">${new Date(c.fecha).toLocaleString("es-MX")}</div>
-      <div class="hint">${c.numVentas || 0} ventas · Total ${moneda(c.total || 0)}</div>
-      <div class="kv"><span class="label">Fondo inicial</span><span>${moneda(c.fondoInicial || 0)}</span></div>
-      <div class="kv"><span class="label">Efectivo esperado</span><span>${moneda(c.efectivoEsperado || 0)}</span></div>
-      <div class="kv"><span class="label">Efectivo contado</span><span>${moneda(c.efectivoContado || 0)}</span></div>
-      ${(() => { const diff = Number(c.diferencia || 0); const label = diff === 0 ? "Caja cuadrada · $0.00" : diff < 0 ? "Faltante · " + moneda(diff) : "Sobrante · +" + moneda(diff); const color = diff === 0 ? "var(--green)" : diff < 0 ? "var(--red-dark)" : "var(--amber)"; return `<div class="kv"><span class="label">Resultado</span><span style="font-weight:800;color:${color};">${label}</span></div>`; })()}
+  cont.innerHTML = cortes.map((c, idx) => `
+    <div class="card corte-historico" style="margin-bottom:12px; padding:14px;">
+      <div class="corte-historico-head">
+        <div>
+          <div class="corte-fecha">🧾 ${new Date(c.fecha).toLocaleString("es-MX")}</div>
+          <div class="hint">${c.numVentas || 0} ventas registradas · Total vendido ${moneda(c.total || 0)}</div>
+        </div>
+        <button class="btn btn-outline btn-sm corte-detalle-btn" type="button" onclick="verDetalleCorte(${idx})">👁️ Ver detalle completo</button>
+      </div>
+      <div class="corte-resumen-grid">
+        <div class="corte-dato"><span>💰 Fondo inicial</span><strong>${moneda(c.fondoInicial || 0)}</strong></div>
+        <div class="corte-dato"><span>🧮 Efectivo esperado</span><strong>${moneda(c.efectivoEsperado || 0)}</strong></div>
+        <div class="corte-dato"><span>💵 Efectivo contado</span><strong>${moneda(c.efectivoContado || 0)}</strong></div>
+        <div class="corte-dato"><span>💸 Retiros</span><strong>${moneda(c.totalRetiros || 0)}</strong></div>
+      </div>
+      ${(() => { const diff = Number(c.diferencia || 0); const label = diff === 0 ? "✅ Caja cuadrada · $0.00" : diff < 0 ? "🔴 Faltante · " + moneda(diff) : "🟢 Sobrante · +" + moneda(diff); const cls = diff === 0 ? "cuadrada" : diff < 0 ? "faltante" : "sobrante"; return `<div class="corte-resultado ${cls}">${label}</div>`; })()}
+      <div id="detalleCorte_${idx}" class="corte-detalle-panel" style="display:none;">
+        <div class="corte-detalle-title">💳 Formas de pago</div>
+        <div class="corte-pago-grid">
+          <div><span>💵 Efectivo</span><strong>${moneda(c.detalle?.efectivo || 0)}</strong></div>
+          <div><span>💳 Tarjeta</span><strong>${moneda(c.detalle?.tarjeta || 0)}</strong></div>
+          <div><span>📲 Transferencia</span><strong>${moneda(c.detalle?.transferencia || 0)}</strong></div>
+        </div>
+        <div class="corte-detalle-title">💸 Retiros de caja</div>
+        ${Array.isArray(c.retiros) && c.retiros.length ? c.retiros.map(r => `<div class="kv"><span class="label">${escapeHtml(r.motivo || "Sin motivo")}</span><span>${moneda(r.monto || 0)}</span></div>`).join("") : '<div class="hint">Sin retiros registrados.</div>'}
+        <div class="kv corte-total-retiros"><span class="label">Total de retiros</span><span style="font-weight:800;">${moneda(c.totalRetiros || 0)}</span></div>
+        ${c.fechaApertura ? `<div class="hint">🔓 Apertura: ${new Date(c.fechaApertura).toLocaleString("es-MX")}</div>` : ''}
+      </div>
     </div>
   `).join("");
+}
+
+function verDetalleCorte(index) {
+  const el = document.getElementById("detalleCorte_" + index);
+  if (!el) return;
+  const abierto = el.style.display !== "none";
+  el.style.display = abierto ? "none" : "block";
+  const botones = document.querySelectorAll('#cortesLista button[onclick^="verDetalleCorte("]');
+  const btn = botones[index];
+  if (btn) btn.textContent = abierto ? "🔎 Detalle" : "🔽 Ocultar";
 }
 
 function abrirCaja() {
