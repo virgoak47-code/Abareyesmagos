@@ -247,6 +247,12 @@
   .btn-secondary { background: var(--gold-soft); color: var(--gold); }
   .btn-outline { background: transparent; border: 1px solid var(--line); color: var(--ink); }
   .btn-danger { background: #F4DEDA; color: var(--red-dark); }
+  .btn-success { background: var(--green-soft); color: var(--green); }
+  .inv-filters { display:flex; gap:6px; margin:0 0 10px; overflow-x:auto; }
+  .inv-filter { flex:none; border:1px solid var(--line); background:transparent; color:var(--ink-soft); padding:7px 11px; border-radius:999px; font-size:12.5px; font-weight:700; cursor:pointer; }
+  .inv-filter.active { background:var(--red); border-color:var(--red); color:#fff; }
+  .prod.inactive { opacity:.72; border-style:dashed; }
+  .badge-inactive { background:var(--line); color:var(--ink-soft); }
   .btn-sm { width: auto; padding: 7px 12px; font-size: 13px; margin-top: 0; }
   .prod-list { display: flex; flex-direction: column; gap: 8px; }
   .prod {
@@ -275,6 +281,16 @@
   .margen-tag { font-size: 11.5px; color: var(--ink-soft); }
   .stock-low { color: var(--amber); font-weight: 700; }
   .price { font-weight: 700; white-space: nowrap; }
+
+  .inv-filters { display:flex; gap:6px; margin:0 0 10px; overflow-x:auto; }
+  .inv-filter { flex:1; min-width:90px; border:1px solid var(--line); background:transparent; color:var(--ink-soft); border-radius:999px; padding:8px 10px; font-size:12px; font-weight:700; cursor:pointer; }
+  .inv-filter.active { background:var(--red); border-color:var(--red); color:#fff; }
+  .prod.inactive { opacity:.68; }
+  .badge-inactive { background:var(--line); color:var(--ink-soft); }
+  .btn-success { background:var(--green-soft); color:var(--green); }
+  .caja-status { padding:10px 12px; border-radius:10px; margin-bottom:12px; font-size:13px; font-weight:700; }
+  .caja-status.open { background:var(--green-soft); color:var(--green); }
+  .caja-status.closed { background:var(--amber-soft); color:var(--amber); }
   .empty {
     text-align: center;
     color: var(--ink-soft);
@@ -414,6 +430,20 @@
     <div class="card" style="background:var(--navy); color:#fff; border:none;">
       <h2 style="color:#fff;">¡Bienvenido!</h2>
       <div style="font-size:13px; opacity:0.85;">Todo listo para tu día de ventas</div>
+    </div>
+
+    <div class="card" id="abrirCajaInicioCard">
+      <h2>🏪 Inicio del turno</h2>
+      <div id="inicioCajaCerrada">
+        <div class="hint">Antes de comenzar a vender, registra el efectivo con el que inicia la caja.</div>
+        <label for="inicioFondoInicial">Fondo inicial</label>
+        <input id="inicioFondoInicial" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Ej. 500.00">
+        <button class="btn btn-primary" onclick="abrirCajaDesdeInicio()">🔓 Abrir caja</button>
+      </div>
+      <div id="inicioCajaAbierta" style="display:none;">
+        <div class="caja-status open">🟢 Caja abierta — turno en curso</div>
+        <div class="kv"><span class="label">Fondo inicial</span><span id="inicioFondoMostrado">$0.00</span></div>
+      </div>
     </div>
 
     <div class="dash-grid">
@@ -618,6 +648,11 @@
     <div class="card">
       <h2>Inventario</h2>
       <input id="invBuscar" placeholder="Buscar por nombre, código o categoría" autocomplete="off" style="margin-bottom:10px;">
+      <div class="inv-filters">
+        <button class="inv-filter active" id="invFiltroActivos" onclick="setFiltroInventario('activos')">🟢 Activos</button>
+        <button class="inv-filter" id="invFiltroInactivos" onclick="setFiltroInventario('inactivos')">⚪ Inactivos</button>
+        <button class="inv-filter" id="invFiltroTodos" onclick="setFiltroInventario('todos')">📋 Todos</button>
+      </div>
       <div class="prod-list" id="invLista"></div>
     </div>
   </section>
@@ -644,18 +679,40 @@
   <!-- CAJA -->
   <section class="view" id="view-caja">
     <div class="card">
-      <h2>Corte de caja</h2>
-      <div class="stat-grid-4">
-        <div class="stat-card blue"><div class="lbl">Ventas sin cortar</div><div class="val" id="cajaNumVentas">0</div></div>
-        <div class="stat-card green"><div class="lbl">Efectivo</div><div class="val" id="cajaEfectivo">$0.00</div></div>
-        <div class="stat-card purple"><div class="lbl">Tarjeta</div><div class="val" id="cajaTarjeta">$0.00</div></div>
-        <div class="stat-card orange"><div class="lbl">Transferencia</div><div class="val" id="cajaTransferencia">$0.00</div></div>
+      <h2>💰 Caja del día</h2>
+      <div id="cajaEstado" class="caja-status closed">🔒 Caja cerrada — abre la caja desde Inicio para comenzar el turno.</div>
+      <div id="cajaResumenBox" style="display:none;">
+        <div class="stat-grid-4">
+          <div class="stat-card blue"><div class="lbl">Ventas sin cortar</div><div class="val" id="cajaNumVentas">0</div></div>
+          <div class="stat-card green"><div class="lbl">Efectivo vendido</div><div class="val" id="cajaEfectivo">$0.00</div></div>
+          <div class="stat-card purple"><div class="lbl">Tarjeta</div><div class="val" id="cajaTarjeta">$0.00</div></div>
+          <div class="stat-card orange"><div class="lbl">Transferencia</div><div class="val" id="cajaTransferencia">$0.00</div></div>
+        </div>
+        <div class="kv"><span class="label">Fondo inicial</span><span id="cajaFondoMostrado">$0.00</span></div>
+        <div class="kv"><span class="label">Retiros de caja</span><span id="cajaRetiros">$0.00</span></div>
+        <div class="kv" style="border-top:1px solid var(--line); margin-top:6px; padding-top:10px;">
+          <span class="label" style="font-weight:700; color:var(--ink);">Efectivo esperado</span>
+          <span id="cajaEsperado" style="font-weight:800; font-size:17px;">$0.00</span>
+        </div>
+        <div class="kv"><span class="label" style="font-weight:700;">Total ventas</span><span id="cajaTotal" style="font-weight:800; font-size:17px;">$0.00</span></div>
+
+        <div style="border-top:1px solid var(--line); margin-top:10px; padding-top:10px;">
+          <h3 style="font-size:14px; margin:0 0 8px;">💸 Retiro de caja</h3>
+          <div class="row">
+            <input id="retiroMonto" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="Monto">
+            <input id="retiroMotivo" placeholder="Motivo (ej. compra, gasto)">
+          </div>
+          <button class="btn btn-secondary" onclick="agregarRetiro()">Agregar retiro</button>
+          <div id="retirosLista" class="hint"></div>
+        </div>
+
+        <div style="border-top:1px solid var(--line); margin-top:10px; padding-top:10px;">
+          <label for="cajaContado">Efectivo contado</label>
+          <input id="cajaContado" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Cuenta el efectivo físico" oninput="actualizarDiferenciaCaja()">
+          <div class="kv" style="margin-top:8px;"><span class="label">Diferencia</span><span id="cajaDiferencia" style="font-weight:800;">—</span></div>
+          <button class="btn btn-primary" onclick="hacerCorte()">🌙 Cerrar y guardar corte</button>
+        </div>
       </div>
-      <div class="kv" style="border-top:1px solid var(--line); margin-top:10px; padding-top:10px;">
-        <span class="label" style="font-weight:700; color:var(--ink);">Total</span>
-        <span id="cajaTotal" style="font-weight:800; font-size:17px;">$0.00</span>
-      </div>
-      <button class="btn btn-primary" onclick="hacerCorte()">Hacer corte de caja</button>
     </div>
 
     <div class="card">
@@ -792,13 +849,14 @@ let state = estadoInicial();
 
 function estadoInicial() {
   return {
-    productos: [],       // {id, nombre, categoria, medida, precio, costo, stock, minimo, barras, codigo, catalogoMarca, catalogoPresentacion, catalogoCategoria, precioReferencia, fuenteReferencia}
+    productos: [],       // {id, nombre, categoria, medida, precio, costo, stock, minimo, barras, codigo, activo, ...}
     contadores: { ABA: 0, PAP: 0 },
     ventas: [],           // ventas sin cortar (se vacía al hacer corte): {id, fecha, items, total, pago}
     historial: [],         // todas las ventas de siempre, para reportes: mismo formato que ventas
     compras: [],           // {id, fecha, productoId, nombre, cantidad, costo}
     creditos: [],           // ventas fiadas: {id, ventaId, cliente, monto, fecha, pagado}
     cortes: [],
+    caja: { abierta: false, fondoInicial: 0, fechaApertura: null, retiros: [] },
     config: { pin: "1234", rolActual: "dueno", precioCheckApiKey: "" }
   };
 }
@@ -866,8 +924,28 @@ function renderInicio() {
     .reduce((s, v) => s + v.total, 0);
   document.getElementById("inicioEfectivoCaja").textContent = moneda(efectivoCaja);
 
-  const pocoStock = state.productos.filter(p => p.minimo > 0 && p.stock <= p.minimo).length;
+  const pocoStock = state.productos.filter(p => productoActivo(p) && p.minimo > 0 && p.stock <= p.minimo).length;
   document.getElementById("inicioPocoStock").textContent = pocoStock;
+  const abierta = !!(state.caja && state.caja.abierta);
+  const cerradaBox = document.getElementById("inicioCajaCerrada");
+  const abiertaBox = document.getElementById("inicioCajaAbierta");
+  if (cerradaBox && abiertaBox) {
+    cerradaBox.style.display = abierta ? "none" : "block";
+    abiertaBox.style.display = abierta ? "block" : "none";
+    if (abierta) document.getElementById("inicioFondoMostrado").textContent = moneda(state.caja.fondoInicial || 0);
+  }
+}
+
+function abrirCajaDesdeInicio() {
+  if (state.caja && state.caja.abierta) { mostrarToast("La caja ya está abierta"); return; }
+  const fondo = parseFloat(document.getElementById("inicioFondoInicial").value);
+  if (isNaN(fondo) || fondo < 0) { mostrarToast("Indica el fondo inicial"); return; }
+  state.caja = { abierta:true, fondoInicial:fondo, fechaApertura:new Date().toISOString(), retiros:[] };
+  guardar();
+  document.getElementById("inicioFondoInicial").value = "";
+  renderInicio();
+  renderCaja();
+  mostrarToast("Caja abierta con " + moneda(fondo));
 }
 
 /* ---------- Roles (dueño / empleado) ---------- */
@@ -1191,7 +1269,7 @@ function guardarProducto() {
     state.productos.push({
       id: crypto.randomUUID(),
       nombre, categoria, medida, precio, costo, stock, minimo, barras, codigo, estrategia,
-      precioReferencia, fuenteReferencia, catalogoInfo: document.getElementById("pCatalogoInfo")?.textContent || "", fechaReferencia: precioReferencia ? new Date().toISOString() : null
+      precioReferencia, fuenteReferencia, catalogoInfo: document.getElementById("pCatalogoInfo")?.textContent || "", fechaReferencia: precioReferencia ? new Date().toISOString() : null, activo: true
     });
     guardar();
     mostrarToast("Producto guardado: " + codigo);
@@ -1251,24 +1329,68 @@ function estrategiaLabel(e) {
   return { normal: "Normal", gancho: "Gancho", margen: "Margen alto", impulso: "Impulso", promocion: "Promoción" }[e] || "Normal";
 }
 
+let filtroInventario = "activos";
+
+function productoActivo(p) {
+  // Compatibilidad: los productos creados antes de esta función se consideran activos.
+  return p.activo !== false;
+}
+
+function setFiltroInventario(filtro) {
+  filtroInventario = filtro;
+  document.querySelectorAll(".inv-filter").forEach(b => b.classList.remove("active"));
+  const mapa = { activos: "invFiltroActivos", inactivos: "invFiltroInactivos", todos: "invFiltroTodos" };
+  const btn = document.getElementById(mapa[filtro]);
+  if (btn) btn.classList.add("active");
+  renderInventario();
+}
+
+function cambiarEstadoProducto(id) {
+  const prod = state.productos.find(p => p.id === id);
+  if (!prod) return;
+  const ahoraActivo = productoActivo(prod);
+  if (ahoraActivo) {
+    const ok = confirm("¿Desactivar "+prod.nombre+"?\n\nNo se borrará. Se conservará su historial y podrás reactivarlo después.");
+    if (!ok) return;
+    prod.activo = false;
+    guardar();
+    renderInventario();
+    renderInicio();
+    mostrarToast("Producto desactivado");
+  } else {
+    prod.activo = true;
+    guardar();
+    renderInventario();
+    renderInicio();
+    mostrarToast("Producto reactivado");
+  }
+}
+
 function renderInventario() {
   const q = (document.getElementById("invBuscar").value || "").toLowerCase();
   const cont = document.getElementById("invLista");
-  const items = state.productos.filter(p =>
+  let items = state.productos.filter(p =>
     !q || p.nombre.toLowerCase().includes(q) || p.codigo.toLowerCase().includes(q) ||
     (p.barras && p.barras.includes(q)) || catLabel(p.categoria).toLowerCase().includes(q)
   );
+
+  if (filtroInventario === "activos") items = items.filter(productoActivo);
+  if (filtroInventario === "inactivos") items = items.filter(p => !productoActivo(p));
+
   if (!items.length) {
-    cont.innerHTML = '<div class="empty">Sin productos que coincidan</div>';
+    cont.innerHTML = '<div class="empty">' + (filtroInventario === "inactivos" ? "No hay productos inactivos" : "Sin productos que coincidan") + '</div>';
+    renderReabastecer();
     return;
   }
+
   cont.innerHTML = items.map(p => {
     const margen = p.precio - (p.costo || 0);
     const margenPct = p.precio > 0 ? Math.round((margen / p.precio) * 100) : 0;
+    const activo = productoActivo(p);
     return `
-    <div class="prod">
+    <div class="prod ${activo ? "" : "inactive"}">
       <div class="info">
-        <div class="name">${escapeHtml(p.nombre)}</div>
+        <div class="name">${escapeHtml(p.nombre)} ${activo ? "" : '<span class="badge badge-inactive">Inactivo</span>'}</div>
         <div class="meta">
           <span class="badge ${catBadgeClass(p.categoria)}">${catLabel(p.categoria)}</span>
           <span class="badge badge-estrategia">${estrategiaLabel(p.estrategia)}</span><br>
@@ -1277,9 +1399,10 @@ function renderInventario() {
         <div class="margen-tag">Margen: ${moneda(margen)} (${margenPct}%)</div>
         ${p.precioReferencia > 0 ? `<div class="hint" style="margin-top:4px;">Referencia 2026: <strong>${moneda(p.precioReferencia)}</strong> · ${p.precio < p.precioReferencia ? '⬇️ estás por debajo' : p.precio > p.precioReferencia ? '⬆️ estás por arriba' : '✅ igual a referencia'}</div>` : ''}
       </div>
-      <div style="display:flex; align-items:center; gap:8px;">
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
         <div class="price">${moneda(p.precio)}</div>
-        <button class="btn btn-outline btn-sm" onclick="editarProducto('${p.id}')">Editar</button>
+        <button class="btn btn-outline btn-sm" onclick="editarProducto('${p.id}')">✏️ Editar</button>
+        <button class="btn ${activo ? 'btn-danger' : 'btn-success'} btn-sm" onclick="cambiarEstadoProducto('${p.id}')">${activo ? '🚫 Desactivar' : '♻️ Reactivar'}</button>
       </div>
     </div>
   `;
@@ -1292,7 +1415,7 @@ document.getElementById("invBuscar").addEventListener("input", renderInventario)
 function renderReabastecer() {
   const cont = document.getElementById("reabastecerLista");
   const vacio = document.getElementById("reabastecerVacio");
-  const bajos = state.productos.filter(p => p.minimo > 0 && p.stock <= p.minimo);
+  const bajos = state.productos.filter(p => productoActivo(p) && p.minimo > 0 && p.stock <= p.minimo);
   if (!bajos.length) { cont.innerHTML = ""; vacio.style.display = "block"; return; }
   vacio.style.display = "none";
   cont.innerHTML = bajos.map(p => `
@@ -1312,10 +1435,10 @@ let editandoId = null;
 
 function buscarProductosVenta(q) {
   q = q.toLowerCase();
-  return state.productos.filter(p =>
+  return state.productos.filter(p => productoActivo(p) && (
     p.nombre.toLowerCase().includes(q) || p.codigo.toLowerCase().includes(q) ||
     (p.barras && p.barras.includes(q))
-  ).slice(0, 8);
+  )).slice(0, 8);
 }
 
 document.getElementById("ventaBuscar").addEventListener("input", (e) => {
@@ -1342,6 +1465,7 @@ document.getElementById("ventaBuscar").addEventListener("input", (e) => {
 function agregarAlCarrito(id) {
   const prod = state.productos.find(p => p.id === id);
   if (!prod) return;
+  if (!productoActivo(prod)) { mostrarToast("Este producto está inactivo"); return; }
   const existente = carrito.find(i => i.id === id);
   if (existente) {
     existente.cantidad += 1;
@@ -1682,46 +1806,141 @@ function renderCompras() {
 }
 
 /* ---------- Corte de caja ---------- */
-function renderCaja() {
-  const ventas = state.ventas;
+function obtenerDatosCaja() {
+  const ventas = state.ventas || [];
   const porMetodo = { efectivo: 0, tarjeta: 0, transferencia: 0 };
   let total = 0;
-  ventas.forEach(v => { porMetodo[v.pago] = (porMetodo[v.pago] || 0) + v.total; total += v.total; });
+  ventas.forEach(v => { porMetodo[v.pago] = (porMetodo[v.pago] || 0) + Number(v.total || 0); total += Number(v.total || 0); });
+  const retiros = (state.caja && Array.isArray(state.caja.retiros)) ? state.caja.retiros : [];
+  const totalRetiros = retiros.reduce((s, r) => s + Number(r.monto || 0), 0);
+  const fondo = Number(state.caja?.fondoInicial || 0);
+  const esperado = fondo + porMetodo.efectivo - totalRetiros;
+  return { ventas, porMetodo, total, retiros, totalRetiros, fondo, esperado };
+}
 
-  document.getElementById("cajaNumVentas").textContent = ventas.length;
-  document.getElementById("cajaEfectivo").textContent = moneda(porMetodo.efectivo);
-  document.getElementById("cajaTarjeta").textContent = moneda(porMetodo.tarjeta);
-  document.getElementById("cajaTransferencia").textContent = moneda(porMetodo.transferencia);
-  document.getElementById("cajaTotal").textContent = moneda(total);
+function renderCaja() {
+  if (!state.caja) state.caja = { abierta:false, fondoInicial:0, fechaApertura:null, retiros:[] };
+  if (!Array.isArray(state.caja.retiros)) state.caja.retiros = [];
+  const d = obtenerDatosCaja();
+  const abierta = !!state.caja.abierta;
+  const estado = document.getElementById("cajaEstado");
+  const resumenBox = document.getElementById("cajaResumenBox");
+  if (abierta) {
+    estado.className = "caja-status open";
+    estado.textContent = "🟢 Caja abierta — aquí puedes cerrar el turno.";
+    resumenBox.style.display = "block";
+  } else {
+    estado.className = "caja-status closed";
+    estado.textContent = "🔒 Caja cerrada — abre la caja desde Inicio.";
+    resumenBox.style.display = "none";
+  }
+  document.getElementById("cajaNumVentas").textContent = d.ventas.length;
+  document.getElementById("cajaEfectivo").textContent = moneda(d.porMetodo.efectivo);
+  document.getElementById("cajaTarjeta").textContent = moneda(d.porMetodo.tarjeta);
+  document.getElementById("cajaTransferencia").textContent = moneda(d.porMetodo.transferencia);
+  document.getElementById("cajaTotal").textContent = moneda(d.total);
+  document.getElementById("cajaFondoMostrado").textContent = moneda(d.fondo);
+  document.getElementById("cajaRetiros").textContent = moneda(d.totalRetiros);
+  document.getElementById("cajaEsperado").textContent = moneda(d.esperado);
+  renderRetirosCaja();
+  actualizarDiferenciaCaja();
 
   const cont = document.getElementById("cortesLista");
   const vacio = document.getElementById("cortesVacio");
-  const cortes = state.cortes.slice().reverse();
+  const cortes = (state.cortes || []).slice().reverse();
   if (!cortes.length) { cont.innerHTML = ""; vacio.style.display = "block"; return; }
   vacio.style.display = "none";
   cont.innerHTML = cortes.map(c => `
-    <div class="kv" style="border-bottom:1px solid var(--line);">
-      <span class="label">${new Date(c.fecha).toLocaleString("es-MX")} · ${c.numVentas} ventas</span>
-      <span style="font-weight:700;">${moneda(c.total)}</span>
+    <div class="card" style="margin-bottom:8px; padding:10px;">
+      <div style="font-weight:700;">${new Date(c.fecha).toLocaleString("es-MX")}</div>
+      <div class="hint">${c.numVentas || 0} ventas · Total ${moneda(c.total || 0)}</div>
+      <div class="kv"><span class="label">Fondo inicial</span><span>${moneda(c.fondoInicial || 0)}</span></div>
+      <div class="kv"><span class="label">Efectivo esperado</span><span>${moneda(c.efectivoEsperado || 0)}</span></div>
+      <div class="kv"><span class="label">Efectivo contado</span><span>${moneda(c.efectivoContado || 0)}</span></div>
+      ${(() => { const diff = Number(c.diferencia || 0); const label = diff === 0 ? "Caja cuadrada · $0.00" : diff < 0 ? "Faltante · " + moneda(diff) : "Sobrante · +" + moneda(diff); const color = diff === 0 ? "var(--green)" : diff < 0 ? "var(--red-dark)" : "var(--amber)"; return `<div class="kv"><span class="label">Resultado</span><span style="font-weight:800;color:${color};">${label}</span></div>`; })()}
     </div>
   `).join("");
 }
 
+function abrirCaja() {
+  // Compatibilidad con versiones anteriores: la apertura ahora se hace desde Inicio.
+  irAVista("inicio");
+  const input = document.getElementById("inicioFondoInicial");
+  if (input) input.focus();
+}
+
+function agregarRetiro() {
+  if (!state.caja?.abierta) { mostrarToast("Primero abre la caja"); return; }
+  const monto = parseFloat(document.getElementById("retiroMonto").value);
+  const motivo = document.getElementById("retiroMotivo").value.trim();
+  if (isNaN(monto) || monto <= 0) { mostrarToast("Indica el monto del retiro"); return; }
+  if (!motivo) { mostrarToast("Indica el motivo del retiro"); return; }
+  const d = obtenerDatosCaja();
+  if (monto > d.esperado) { mostrarToast("El retiro supera el efectivo esperado"); return; }
+  state.caja.retiros.push({ id:crypto.randomUUID(), monto, motivo, fecha:new Date().toISOString() });
+  guardar();
+  document.getElementById("retiroMonto").value = "";
+  document.getElementById("retiroMotivo").value = "";
+  mostrarToast("Retiro agregado: " + moneda(monto));
+  renderCaja();
+}
+
+function renderRetirosCaja() {
+  const el = document.getElementById("retirosLista");
+  if (!el) return;
+  const retiros = state.caja?.retiros || [];
+  if (!retiros.length) { el.innerHTML = "Sin retiros registrados."; return; }
+  el.innerHTML = retiros.map(r => `<div class="kv"><span class="label">${escapeHtml(r.motivo)} · ${new Date(r.fecha).toLocaleTimeString("es-MX", {hour:"2-digit", minute:"2-digit"})}</span><span>${moneda(r.monto)}</span></div>`).join("");
+}
+
+function actualizarDiferenciaCaja() {
+  const el = document.getElementById("cajaDiferencia");
+  const input = document.getElementById("cajaContado");
+  if (!el || !input) return;
+  const contado = parseFloat(input.value);
+  if (isNaN(contado) || !state.caja?.abierta) {
+    el.textContent = "—";
+    el.style.color = "var(--muted)";
+    el.dataset.estado = "sin-contar";
+    return;
+  }
+  const d = obtenerDatosCaja();
+  const diferencia = contado - d.esperado;
+  if (diferencia === 0) {
+    el.textContent = "✅ Caja cuadrada · $0.00";
+    el.style.color = "var(--green)";
+    el.dataset.estado = "cuadrada";
+  } else if (diferencia < 0) {
+    el.textContent = "🔴 Faltante · " + moneda(diferencia);
+    el.style.color = "var(--red-dark)";
+    el.dataset.estado = "faltante";
+  } else {
+    el.textContent = "🟢 Sobrante · +" + moneda(diferencia);
+    el.style.color = "var(--green)";
+    el.dataset.estado = "sobrante";
+  }
+}
+
 function hacerCorte() {
-  if (!state.ventas.length) { mostrarToast("No hay ventas para cortar"); return; }
-  const porMetodo = { efectivo: 0, tarjeta: 0, transferencia: 0 };
-  let total = 0;
-  state.ventas.forEach(v => { porMetodo[v.pago] = (porMetodo[v.pago] || 0) + v.total; total += v.total; });
+  if (!state.caja?.abierta) { mostrarToast("Primero abre la caja"); return; }
+  const d = obtenerDatosCaja();
+  const contado = parseFloat(document.getElementById("cajaContado").value);
+  if (isNaN(contado) || contado < 0) { mostrarToast("Cuenta el efectivo y escríbelo antes de cerrar"); return; }
+  const diferencia = contado - d.esperado;
   state.cortes.push({
-    id: crypto.randomUUID(),
-    fecha: new Date().toISOString(),
-    numVentas: state.ventas.length,
-    total, detalle: porMetodo
+    id: crypto.randomUUID(), fecha: new Date().toISOString(), numVentas: d.ventas.length,
+    total:d.total, detalle:d.porMetodo, fondoInicial:d.fondo,
+    retiros:d.retiros.map(r => ({...r})), totalRetiros:d.totalRetiros,
+    efectivoEsperado:d.esperado, efectivoContado:contado, diferencia,
+    fechaApertura:state.caja.fechaApertura
   });
   state.ventas = [];
+  state.caja = { abierta:false, fondoInicial:0, fechaApertura:null, retiros:[] };
   guardar();
-  mostrarToast("Corte guardado: " + moneda(total));
+  document.getElementById("cajaContado").value = "";
+  mostrarToast("Corte guardado · Diferencia: " + moneda(diferencia));
   renderCaja();
+  renderInicio();
 }
 
 /* ---------- Reportes ---------- */
