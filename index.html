@@ -365,6 +365,101 @@
     #ticketContenido, #ticketContenido * { visibility: visible; }
     #ticketContenido { position: absolute; top: 0; left: 0; width: 100%; font-size: 14px; }
   }
+
+/* ===== REDISEÑO VISUAL — Los Reyes Magos ===== */
+:root {
+  --cream:#F5F7FB; --ink:#172033; --ink-soft:#667085; --line:#E5E7EB;
+  --red:#B4232D; --red-dark:#8F1821; --gold:#D89A24; --gold-soft:#FFF4D8;
+  --green:#159447; --green-soft:#E8F7EE; --amber:#C77912; --amber-soft:#FFF3DC;
+  --purple:#6851B8; --purple-soft:#F0ECFF; --pink:#C44872; --pink-soft:#FCEAF1;
+  --navy:#101A35; --navy-soft:#1B2A50; --card:#FFFFFF;
+  --radius:16px; --shadow:0 8px 24px rgba(16,26,53,.07);
+}
+body{background:linear-gradient(180deg,#F7F9FC 0%,#F1F4F9 100%);color:var(--ink);}
+header{background:linear-gradient(135deg,#0D1730 0%,#18284D 100%);padding:calc(16px + env(safe-area-inset-top,0px)) 16px 15px;box-shadow:0 4px 18px rgba(10,18,40,.18);}
+header h1{font-size:20px;letter-spacing:.15px;font-weight:800;}
+header p{font-size:12px;opacity:.72;}
+#btnRol{background:rgba(216,154,36,.16)!important;border:1px solid rgba(216,154,36,.35)!important;color:#FFE7A8!important;padding:7px 12px!important;}
+nav{gap:7px;padding:9px 12px;background:rgba(255,255,255,.96);box-shadow:0 2px 10px rgba(16,26,53,.04);border-bottom:1px solid #E7EAF0;backdrop-filter:blur(10px);}
+nav button{border:1px solid #E3E6EC;background:#F8F9FB;color:#596579;padding:8px 13px;border-radius:10px;font-size:12.5px;font-weight:750;}
+nav button.active{background:var(--navy);border-color:var(--navy);color:#fff;box-shadow:0 3px 8px rgba(16,26,53,.18);}
+main{padding:16px 14px 105px;max-width:680px;}
+.card{background:rgba(255,255,255,.98);border:1px solid #E7EAF0;border-radius:17px;padding:15px;margin-bottom:13px;box-shadow:var(--shadow);}
+.card h2{font-size:16px;font-weight:800;letter-spacing:-.1px;}
+.card h3{font-size:14px;font-weight:800;}
+label{font-size:12px;font-weight:650;color:#667085;margin:11px 0 5px;}
+input,select{padding:11px 12px;border:1px solid #DDE2EA;border-radius:11px;background:#FAFBFD;color:var(--ink);box-shadow:inset 0 1px 2px rgba(16,26,53,.025);}
+input:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(216,154,36,.13);outline:none;}
+.btn{border-radius:11px;padding:12px 16px;font-size:14px;font-weight:800;margin-top:12px;transition:transform .12s,filter .12s;}
+.btn:active,.dash-btn:active,.pay-btn:active{transform:translateY(1px);filter:brightness(.97);}
+.btn-primary{background:linear-gradient(135deg,var(--red),#9D1D27);box-shadow:0 5px 12px rgba(180,35,45,.18);}
+.btn-secondary{background:var(--gold-soft);color:#8A5B08;border:1px solid #F2D79A;}
+.btn-outline{background:#fff;border:1px solid #DDE2EA;color:var(--ink);}
+.btn-success{background:var(--green-soft);color:#11743A;border:1px solid #C9EBD5;}
+.btn-danger{background:#FDEAEA;color:#9F1D28;border:1px solid #F4CACA;}
+.dash-grid{gap:11px;margin:5px 0 15px;}
+.dash-btn{position:relative;min-height:112px;border-radius:16px;padding:15px;background:var(--navy);box-shadow:0 7px 16px rgba(16,26,53,.12);overflow:hidden;}
+.dash-btn::after{content:"";position:absolute;width:70px;height:70px;border-radius:50%;right:-22px;bottom:-28px;background:rgba(255,255,255,.09);}
+.dash-btn .ic{font-size:23px;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.18));}
+.dash-btn .sub{font-size:11px;opacity:.78;}
+.dash-btn.c-blue{background:linear-gradient(145deg,#B4232D,#8E1821)}
+.dash-btn.c-green{background:linear-gradient(145deg,#159447,#087238)}
+.dash-btn.c-orange{background:linear-gradient(145deg,#D89A24,#B86F0B)}
+.dash-btn.c-purple{background:linear-gradient(145deg,#7560C7,#55409F)}
+.dash-btn.c-teal{background:linear-gradient(145deg,#16879B,#0C6675)}
+.dash-btn.c-pink{background:linear-gradient(145deg,#C44872,#A52D58)}
+.stat-grid{gap:9px;}
+.stat-mini{border:1px solid #E7EAF0;border-radius:13px;padding:11px 8px;background:#fff;box-shadow:0 3px 10px rgba(16,26,53,.04);}
+.stat-mini .ic{width:29px;height:29px;border-radius:9px;margin-bottom:7px;font-size:14px;}
+.stat-mini .val{font-size:14px;font-weight:850;}
+.stat-mini .lbl{font-size:10.5px;font-weight:600;}
+.stat-grid-4{gap:9px;}
+.stat-card{border-radius:13px;padding:11px 12px;border:1px solid transparent;}
+.stat-card .lbl{font-size:10.5px;font-weight:650;}
+.stat-card .val{font-size:16px;font-weight:850;margin-top:3px;}
+.prod-list{gap:9px;}
+.prod{border:1px solid #E5E8EE;border-radius:13px;padding:11px 12px;background:#fff;box-shadow:0 2px 7px rgba(16,26,53,.035);}
+.prod .name{font-weight:750;font-size:14px;}
+.prod .meta{font-size:11.5px;}
+.badge{padding:3px 8px;font-size:10px;}
+.inv-filters{gap:7px;margin-bottom:11px;}
+.inv-filter{border-color:#DDE2EA;background:#F8F9FB;padding:8px 11px;border-radius:10px;}
+.inv-filter.active{background:var(--navy);border-color:var(--navy);}
+.pay-grid{gap:9px;margin-top:11px;}
+.pay-btn{border-radius:12px;padding:13px 9px;font-size:13px;box-shadow:0 4px 10px rgba(16,26,53,.08);}
+.cart-bar{padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));background:rgba(255,255,255,.97);border-top:1px solid #E2E6ED;box-shadow:0 -5px 18px rgba(16,26,53,.08);backdrop-filter:blur(10px);}
+.cart-bar .total{font-size:17px;font-weight:850;}
+.cart-bar button{background:linear-gradient(135deg,var(--red),#961B25);border-radius:11px;padding:12px 21px;box-shadow:0 5px 12px rgba(180,35,45,.2);}
+.qty-ctrl button{width:29px;height:29px;border-radius:8px;background:#F7F8FA;border-color:#DDE2EA;}
+.caja-status{border-radius:12px;padding:11px 12px;}
+.empty{padding:28px 12px;background:#FAFBFD;border-radius:12px;border:1px dashed #DDE2EA;}
+.scan-btn{border-radius:11px;padding:12px;background:var(--green-soft);color:#11743A;border:1px solid #C9EBD5;}
+.hint{font-size:11.5px;line-height:1.55;}
+.toast{bottom:94px;padding:10px 17px;border-radius:12px;box-shadow:0 8px 22px rgba(16,26,53,.18);}
+/* Hero de inicio: mantiene el HTML y solo mejora su presencia */
+#view-inicio > .card:first-child{background:linear-gradient(135deg,#0D1730 0%,#1C2E57 100%)!important;border:0!important;border-radius:18px!important;padding:19px 17px!important;box-shadow:0 9px 22px rgba(16,26,53,.16)!important;position:relative;overflow:hidden;}
+#view-inicio > .card:first-child::after{content:"✦";position:absolute;right:18px;top:9px;font-size:54px;color:rgba(216,154,36,.18);transform:rotate(12deg);}
+#view-inicio > .card:first-child h2{font-size:20px!important;letter-spacing:-.25px;}
+#abrirCajaInicioCard{border-color:#E7EAF0;}
+@media (max-width:430px){
+  main{padding-left:11px;padding-right:11px;}
+  .dash-grid{gap:9px;}
+  .dash-btn{min-height:104px;padding:13px;border-radius:14px;}
+  .dash-btn .ic{font-size:21px;}
+  .card{padding:13px;border-radius:15px;}
+  .stat-mini{padding:10px 6px;}
+}
+@media (prefers-color-scheme:dark){
+  body{background:#0C1222;}
+  nav{background:#131B30;border-color:#27324A;}
+  nav button{background:#192239;border-color:#2C3750;color:#AAB5CA;}
+  nav button.active{background:#E1A33A;border-color:#E1A33A;color:#182033;}
+  .card,.stat-mini,.prod{background:#151E32;border-color:#29354E;box-shadow:0 8px 20px rgba(0,0,0,.16);}
+  input,select{background:#101829;border-color:#303C54;}
+  .btn-outline,.inv-filter{background:#151E32;border-color:#303C54;color:#E7ECF5;}
+  .empty{background:#111A2C;border-color:#303C54;}
+  .cart-bar{background:rgba(15,23,40,.96);border-color:#29354E;}
+}
 </style>
 </head>
 <body>
@@ -471,6 +566,40 @@
         <div class="val" id="inicioPocoStock">0</div>
         <div class="lbl">Poco stock</div>
       </div>
+    </div>
+
+    <div class="card" style="margin-top:10px;">
+      <h3 style="margin:0 0 8px;">📊 Resumen de hoy</h3>
+      <div class="stat-grid-4">
+        <div class="stat-card blue"><div class="lbl">🎟️ Tickets</div><div class="val" id="inicioTicketsHoy">0</div></div>
+        <div class="stat-card green"><div class="lbl">🧾 Ticket promedio</div><div class="val" id="inicioTicketPromedio">$0.00</div></div>
+        <div class="stat-card purple"><div class="lbl">💳 Tarjeta</div><div class="val" id="inicioTarjetaHoy">$0.00</div></div>
+        <div class="stat-card orange"><div class="lbl">🔄 Transferencias</div><div class="val" id="inicioTransferHoy">$0.00</div></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:10px;">
+      <h3 style="margin:0 0 8px;">📦 Estado del inventario</h3>
+      <div class="stat-grid-4">
+        <div class="stat-card blue"><div class="lbl">📦 Productos activos</div><div class="val" id="inicioProductosTotal">0</div></div>
+        <div class="stat-card orange"><div class="lbl">🟡 Poco stock</div><div class="val" id="inicioProductosPoco">0</div></div>
+        <div class="stat-card purple"><div class="lbl">🔴 Agotados</div><div class="val" id="inicioProductosAgotados">0</div></div>
+        <div class="stat-card green"><div class="lbl">🆕 Agregados hoy</div><div class="val" id="inicioProductosNuevos">0</div></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:10px;">
+      <div style="display:flex; justify-content:space-between; gap:8px; align-items:center;">
+        <h3 style="margin:0;">🔥 Más vendidos hoy</h3>
+        <button class="btn btn-outline btn-sm" type="button" onclick="irAVista('reportes')">Ver reportes</button>
+      </div>
+      <div id="inicioMasVendidos" class="hint" style="margin-top:8px;">Aún no hay ventas hoy.</div>
+    </div>
+
+    <div class="card" style="margin-top:10px;">
+      <h3 style="margin:0 0 8px;">💰 Ganancia estimada de hoy</h3>
+      <div id="inicioGananciaHoy" style="font-size:24px; font-weight:900; color:var(--green);">$0.00</div>
+      <div class="hint" style="margin-top:4px;">Utilidad bruta estimada según el costo registrado en tus productos.</div>
     </div>
   </section>
 
@@ -608,7 +737,10 @@
         </div>
         <div id="pMercado" class="hint" style="margin-top:6px;"></div>
         <div id="pComparacion" class="hint" style="margin-top:6px;"></div>
-        <button class="btn btn-secondary" type="button" onclick="consultarCatalogoYPrecios()">🔎 Consultar producto y precio</button>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">
+          <button class="btn btn-secondary" type="button" onclick="consultarCatalogoYPrecios()">🔎 Consultar producto y precio</button>
+          <button class="btn btn-outline" type="button" onclick="consultarProfecoReferencia()">🇲🇽 Consultar Profeco</button>
+        </div>
         <div class="hint" style="margin-top:6px;">No cambia tu precio automáticamente. Tú decides si lo dejas o lo modificas.</div>
       </div>
 
@@ -950,16 +1082,67 @@ document.querySelector(".dash-grid").addEventListener("click", (e) => {
 
 function renderInicio() {
   const hoy = new Date().toISOString().slice(0, 10);
-  const ventasHoy = state.historial.filter(v => v.fecha.slice(0, 10) === hoy)
-    .reduce((s, v) => s + v.total, 0);
+  const ventasHoyLista = state.historial.filter(v => String(v.fecha || "").slice(0, 10) === hoy);
+  const ventasHoy = ventasHoyLista.reduce((s, v) => s + (Number(v.total) || 0), 0);
+  const ticketsHoy = ventasHoyLista.length;
   document.getElementById("inicioVentasHoy").textContent = moneda(ventasHoy);
 
   const efectivoCaja = state.ventas.filter(v => v.pago === "efectivo")
-    .reduce((s, v) => s + v.total, 0);
+    .reduce((s, v) => s + (Number(v.total) || 0), 0);
   document.getElementById("inicioEfectivoCaja").textContent = moneda(efectivoCaja);
 
-  const pocoStock = state.productos.filter(p => productoActivo(p) && p.minimo > 0 && p.stock <= p.minimo).length;
+  const activos = state.productos.filter(p => productoActivo(p));
+  const pocoStock = activos.filter(p => Number(p.minimo) > 0 && Number(p.stock || 0) <= Number(p.minimo)).length;
+  const agotados = activos.filter(p => Number(p.stock || 0) <= 0).length;
   document.getElementById("inicioPocoStock").textContent = pocoStock;
+  document.getElementById("inicioTicketsHoy").textContent = ticketsHoy;
+  document.getElementById("inicioTicketPromedio").textContent = moneda(ticketsHoy ? ventasHoy / ticketsHoy : 0);
+  document.getElementById("inicioProductosTotal").textContent = activos.length;
+  document.getElementById("inicioProductosPoco").textContent = pocoStock;
+  document.getElementById("inicioProductosAgotados").textContent = agotados;
+
+  const porPago = { efectivo: 0, tarjeta: 0, transferencia: 0 };
+  ventasHoyLista.forEach(v => {
+    const metodo = v.pago || "efectivo";
+    porPago[metodo] = (porPago[metodo] || 0) + (Number(v.total) || 0);
+  });
+  document.getElementById("inicioTarjetaHoy").textContent = moneda(porPago.tarjeta);
+  document.getElementById("inicioTransferHoy").textContent = moneda(porPago.transferencia);
+
+  const porProducto = {};
+  let gananciaHoy = 0;
+  ventasHoyLista.forEach(v => {
+    (v.items || []).forEach(i => {
+      const cantidad = Number(i.cantidad) || 0;
+      const precio = Number(i.precio) || 0;
+      const costo = Number(i.costo) || 0;
+      const clave = i.id || i.nombre || "sin-id";
+      if (!porProducto[clave]) porProducto[clave] = { nombre: i.nombre || "Producto", cantidad: 0 };
+      porProducto[clave].cantidad += cantidad;
+      gananciaHoy += (precio - costo) * cantidad;
+    });
+  });
+
+  const top = Object.values(porProducto).sort((a, b) => b.cantidad - a.cantidad).slice(0, 5);
+  const masVendidos = document.getElementById("inicioMasVendidos");
+  if (!top.length) {
+    masVendidos.textContent = "Aún no hay ventas hoy.";
+  } else {
+    masVendidos.innerHTML = top.map((p, i) =>
+      `<div class="kv"><span class="label">${i + 1}. ${escapeHtml(p.nombre)}</span><span style="font-weight:800;">${p.cantidad} pza(s)</span></div>`
+    ).join("");
+  }
+
+  const productosNuevos = activos.filter(p => {
+    const f = p.fechaAlta || p.fechaCreacion || p.createdAt || p.fecha;
+    return f && String(f).slice(0, 10) === hoy;
+  }).length;
+  document.getElementById("inicioProductosNuevos").textContent = productosNuevos;
+
+  const gananciaEl = document.getElementById("inicioGananciaHoy");
+  gananciaEl.textContent = moneda(gananciaHoy);
+  gananciaEl.style.color = gananciaHoy >= 0 ? "var(--green)" : "var(--red)";
+
   const abierta = !!(state.caja && state.caja.abierta);
   const cerradaBox = document.getElementById("inicioCajaCerrada");
   const abiertaBox = document.getElementById("inicioCajaAbierta");
@@ -1129,6 +1312,47 @@ function mostrarDatosCatalogo(info) {
   el.innerHTML = partes.join(" · ");
 }
 
+function normalizarCodigoPrecio(codigo) {
+  return String(codigo || "").replace(/\D/g, "");
+}
+
+function leerPreciosReferenciaLocales() {
+  try {
+    return JSON.parse(localStorage.getItem("reyes_magos_precios_referencia_v1") || "{}");
+  } catch (e) {
+    return {};
+  }
+}
+
+function guardarPrecioReferenciaLocal(codigo, precio, fuente, datos = {}) {
+  const key = normalizarCodigoPrecio(codigo);
+  const value = Number(precio);
+  if (!key || !isFinite(value) || value <= 0) return;
+  const db = leerPreciosReferenciaLocales();
+  db[key] = {
+    precio: value,
+    fuente: fuente || "Referencia local",
+    fecha: new Date().toISOString(),
+    ...datos
+  };
+  try { localStorage.setItem("reyes_magos_precios_referencia_v1", JSON.stringify(db)); } catch (e) {}
+}
+
+function obtenerPrecioReferenciaLocal(codigo) {
+  const key = normalizarCodigoPrecio(codigo);
+  if (!key) return null;
+  const db = leerPreciosReferenciaLocales();
+  const dato = db[key];
+  return dato && Number(dato.precio) > 0 ? dato : null;
+}
+
+function buscarPrecioEnInventario(codigo) {
+  const key = normalizarCodigoPrecio(codigo);
+  if (!key || !Array.isArray(state?.productos)) return null;
+  const prod = state.productos.find(p => normalizarCodigoPrecio(p.barras) === key && Number(p.precio) > 0);
+  return prod ? { precio: Number(prod.precio), producto: prod } : null;
+}
+
 async function consultarOpenPrices(codigo) {
   const url = "https://prices.openfoodfacts.org/api/v1/prices?product_code=" + escaparParametro(codigo) + "&size=20";
   const data = await fetchJsonSeguro(url, {
@@ -1140,8 +1364,8 @@ async function consultarOpenPrices(codigo) {
 
   const items = Array.isArray(data?.items) ? data.items : [];
 
-  // Para una tienda en México, solo usamos observaciones en MXN.
-  const mxn = items
+  // Open Prices es crowdsourced. Para México solo aceptamos observaciones MXN.
+  return items
     .map(item => {
       const price = Number(item.price);
       const currency = String(item.currency || item.price_currency || "").toUpperCase();
@@ -1158,8 +1382,6 @@ async function consultarOpenPrices(codigo) {
     })
     .filter(x => x.price > 0 && x.currency === "MXN")
     .sort((a, b) => String(b.date).localeCompare(String(a.date)));
-
-  return mxn;
 }
 
 async function consultarCatalogoYPrecios() {
@@ -1184,8 +1406,6 @@ async function consultarCatalogoYPrecios() {
   const fuenteEl = document.getElementById("pFuenteReferencia");
   const refEl = document.getElementById("pReferencia");
 
-  // Precio de referencia: primero Open Prices; si no hay MXN, dejamos el estado
-  // explícito y permitimos captura manual. No bloqueamos el alta ni alteramos tu precio.
   try {
     const precios = await consultarOpenPrices(codigo);
 
@@ -1196,26 +1416,60 @@ async function consultarCatalogoYPrecios() {
 
       refEl.value = ultimo.price.toFixed(2);
       fuenteEl.value = "Open Prices — MXN";
+      guardarPrecioReferenciaLocal(codigo, ultimo.price, "Open Prices — MXN", { min, max, reportes: precios.length });
 
       const fecha = ultimo.date ? new Date(ultimo.date).toLocaleDateString("es-MX") : "";
       mercadoEl.innerHTML =
-        `💰 <strong>Precio de referencia encontrado</strong>: ${moneda(ultimo.price)}` +
+        `💰 Precio MXN encontrado: <strong>${moneda(ultimo.price)}</strong>` +
         (fecha ? ` · ${fecha}` : "") +
         (ultimo.shop ? ` · ${escapeHtml(ultimo.shop)}` : "") +
-        `<br>Rango encontrado: <strong>${moneda(min)}</strong> a <strong>${moneda(max)}</strong> · ${precios.length} reporte(s) MXN.`;
+        `<br>Rango: <strong>${moneda(min)}</strong> a <strong>${moneda(max)}</strong> · ${precios.length} reporte(s).` +
+        `<br><span class="hint">✓ Guardado como referencia local para futuras consultas.</span>`;
     } else {
-      refEl.value = "";
-      fuenteEl.value = "Pendiente de referencia";
-      mercadoEl.innerHTML =
-        `🟡 <strong>Producto encontrado, pero no hay precio MXN reportado para este código.</strong><br>` +
-        `Puedes capturar una referencia manual; el sistema no cambiará tu precio automáticamente.`;
+      // Segundo nivel: una referencia previamente guardada para ese código.
+      const local = obtenerPrecioReferenciaLocal(codigo);
+      if (local) {
+        refEl.value = Number(local.precio).toFixed(2);
+        fuenteEl.value = local.fuente || "Referencia local";
+        mercadoEl.innerHTML =
+          `💾 Referencia guardada: <strong>${moneda(local.precio)}</strong>` +
+          `<br><span class="hint">No hay un precio MXN nuevo disponible; se usa el último dato guardado.</span>`;
+      } else {
+        // Tercer nivel: si ya existe en tu inventario, mostramos tu precio actual como referencia interna.
+        const interno = buscarPrecioEnInventario(codigo);
+        if (interno) {
+          refEl.value = Number(interno.precio).toFixed(2);
+          fuenteEl.value = "Tu inventario — referencia interna";
+          mercadoEl.innerHTML =
+            `📦 Producto ya registrado: <strong>${moneda(interno.precio)}</strong>` +
+            `<br><span class="hint">Es tu precio actual, no un precio de mercado. Puedes reemplazarlo por una referencia externa.</span>`;
+        } else {
+          refEl.value = "";
+          fuenteEl.value = "Pendiente de referencia";
+          mercadoEl.innerHTML =
+            "⚠️ No encontramos un precio MXN para este código." +
+            "<br><span class=\"hint\">El producto sí puede estar reconocido aunque no exista una observación de precio.</span>";
+        }
+      }
     }
   } catch (e) {
-    refEl.value = "";
-    fuenteEl.value = "Pendiente de referencia";
-    mercadoEl.innerHTML =
-      `🟡 <strong>Producto encontrado, pero la consulta de precios no respondió.</strong><br>` +
-      `Puedes capturar una referencia manual; el resto de los datos del producto siguen disponibles.`;
+    const local = obtenerPrecioReferenciaLocal(codigo);
+    if (local) {
+      refEl.value = Number(local.precio).toFixed(2);
+      fuenteEl.value = local.fuente || "Referencia local";
+      mercadoEl.innerHTML = `💾 Sin conexión con precios externos. Se conserva la referencia guardada: <strong>${moneda(local.precio)}</strong>.`;
+    } else {
+      const interno = buscarPrecioEnInventario(codigo);
+      if (interno) {
+        refEl.value = Number(interno.precio).toFixed(2);
+        fuenteEl.value = "Tu inventario — referencia interna";
+        mercadoEl.innerHTML = `📦 Sin conexión con precios externos. Tu precio actual es <strong>${moneda(interno.precio)}</strong>.`;
+      } else {
+        refEl.value = "";
+        fuenteEl.value = "Pendiente de referencia";
+        mercadoEl.textContent = "⚠️ No se pudo consultar una fuente externa de precios.";
+      }
+    }
   }
 
   actualizarComparacionPrecio();
@@ -1225,6 +1479,103 @@ async function consultarCatalogoYPrecios() {
   } else {
     mostrarToast("Consulta terminada. Revisa o captura el producto.");
   }
+}
+
+async function fetchTextoSeguro(url, options = {}) {
+  try {
+    const resp = await fetch(url, options);
+    if (!resp.ok) return null;
+    return await resp.text();
+  } catch (e) {
+    console.warn("Consulta de texto externa no disponible:", url, e);
+    return null;
+  }
+}
+
+function normalizarTextoPrecio(v) {
+  return String(v || "")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase().replace(/[^A-Z0-9. ]+/g, " ")
+    .replace(/\s+/g, " ").trim();
+}
+
+async function consultarProfecoReferencia() {
+  const codigo = document.getElementById("pBarras").value.trim();
+  const nombreEl = document.getElementById("pNombre");
+  const mercadoEl = document.getElementById("pMercado");
+  const fuenteEl = document.getElementById("pFuenteReferencia");
+  const refEl = document.getElementById("pReferencia");
+  const nombre = nombreEl ? nombreEl.value.trim() : "";
+
+  if (!nombre && !codigo) {
+    mostrarToast("Primero identifica o escribe el producto");
+    return;
+  }
+
+  // Profeco no ofrece una consulta pública por código de barras.
+  // Usamos el nombre/marca como búsqueda y mostramos los precios de referencia.
+  const termino = nombre || codigo;
+  const url = "https://qqp.profeco.gob.mx/results?searchTerm=" + escaparParametro(termino);
+  mercadoEl.innerHTML = "🇲🇽 Consultando Quién es Quién en los Precios de Profeco...";
+  fuenteEl.value = "Profeco — Quién es Quién en los Precios";
+
+  const html = await fetchTextoSeguro(url, { headers: { "Accept": "text/html" } });
+  if (html) {
+    try {
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      const filas = Array.from(doc.querySelectorAll("tr"));
+      const encontrados = [];
+      const patronPrecio = /\$\s*([0-9]+(?:[.,][0-9]{1,2})?)/;
+      for (const fila of filas) {
+        const texto = (fila.textContent || "").replace(/\s+/g, " ").trim();
+        const m = texto.match(patronPrecio);
+        if (!m) continue;
+        const precio = Number(m[1].replace(/,/g, ""));
+        if (!(precio > 0)) continue;
+        const fecha = (texto.match(/Fecha de observaci[oó]n:\s*([0-9]{4}-[0-9]{2}-[0-9]{2})/i) || [])[1] || "";
+        const cadena = (texto.match(/(WALMART|BODEGA AURRERA|SORIANA|CHEDRAUI|SUPER AKI|CHEDRAUI|LA COMER|OXXO|COSTCO|SAM'S|CITY MARKET|MERCADO PUBLICO|CENTRAL DE ABASTOS)[^$]*/i) || [])[1] || "";
+        encontrados.push({ precio, fecha, cadena, texto });
+      }
+
+      const terminoNorm = normalizarTextoPrecio(nombre).split(" ").filter(x => x.length >= 4);
+      const filtrados = encontrados.filter(x => {
+        const t = normalizarTextoPrecio(x.texto);
+        const coincidencias = terminoNorm.filter(pal => t.includes(pal)).length;
+        return terminoNorm.length ? coincidencias >= Math.min(2, terminoNorm.length) : true;
+      });
+      const lista = (filtrados.length ? filtrados : encontrados).slice(0, 30);
+
+      if (lista.length) {
+        const precios = lista.map(x => x.precio).filter(x => x > 0);
+        const masReciente = [...lista].sort((a,b) => String(b.fecha).localeCompare(String(a.fecha)))[0];
+        const promedio = precios.reduce((a,b) => a+b, 0) / precios.length;
+        const min = Math.min(...precios);
+        const max = Math.max(...precios);
+        refEl.value = promedio.toFixed(2);
+        fuenteEl.value = "Profeco — QQP 2026";
+        guardarPrecioReferenciaLocal(codigo || nombre, promedio, "Profeco — QQP 2026", { min, max, reportes: lista.length, fecha: masReciente.fecha, cadena: masReciente.cadena });
+        mercadoEl.innerHTML =
+          `🇲🇽 Profeco: referencia promedio <strong>${moneda(promedio)}</strong>` +
+          `<br>Rango encontrado: <strong>${moneda(min)}</strong> a <strong>${moneda(max)}</strong> · ${lista.length} observación(es).` +
+          (masReciente.fecha ? `<br>Última fecha encontrada: <strong>${masReciente.fecha}</strong>` : "") +
+          (masReciente.cadena ? ` · ${escapeHtml(masReciente.cadena.trim())}` : "") +
+          `<br><span class="hint">✓ Guardado como referencia local. Profeco maneja precios de referencia, no precios en tiempo real.</span>`;
+        actualizarComparacionPrecio();
+        mostrarToast("Precio de referencia encontrado en Profeco");
+        return;
+      }
+    } catch (e) {
+      console.warn("No se pudo interpretar la respuesta de Profeco", e);
+    }
+  }
+
+  // Si el navegador bloquea la lectura automática por CORS, dejamos la consulta oficial lista.
+  mercadoEl.innerHTML =
+    `🇲🇽 Profeco no pudo entregarnos el precio directamente desde el POS.` +
+    `<br><a href="${url}" target="_blank" rel="noopener" style="font-weight:800;">Abrir búsqueda oficial de Profeco ↗</a>` +
+    `<br><span class="hint">Busca el producto y captura la referencia en la casilla de precio. La fuente quedará como Profeco.</span>`;
+  fuenteEl.value = "Profeco — captura manual";
+  mostrarToast("Se abrió la búsqueda oficial de Profeco");
 }
 
 async function buscarCatalogoProducto() {
@@ -1297,6 +1648,7 @@ function guardarProducto() {
     const precioReferencia = parseFloat(document.getElementById("pReferencia").value) || 0;
     const fuenteReferencia = document.getElementById("pFuenteReferencia").value.trim();
     const catalogoInfo = document.getElementById("pCatalogoInfo")?.textContent || "";
+    if (barras && precioReferencia > 0) guardarPrecioReferenciaLocal(barras, precioReferencia, fuenteReferencia || "Referencia manual");
     Object.assign(prod, { nombre, categoria, medida, precio, costo, stock, minimo, barras, estrategia, precioReferencia, fuenteReferencia, catalogoInfo, fechaReferencia: precioReferencia ? new Date().toISOString() : null });
     guardar();
     mostrarToast("Producto actualizado: " + prod.codigo);
@@ -1306,6 +1658,7 @@ function guardarProducto() {
     const codigo = categoria + "-" + String(state.contadores[categoria]).padStart(4, "0");
     const precioReferencia = parseFloat(document.getElementById("pReferencia").value) || 0;
     const fuenteReferencia = document.getElementById("pFuenteReferencia").value.trim();
+    if (barras && precioReferencia > 0) guardarPrecioReferenciaLocal(barras, precioReferencia, fuenteReferencia || "Referencia manual");
     state.productos.push({
       id: crypto.randomUUID(),
       nombre, categoria, medida, precio, costo, stock, minimo, barras, codigo, estrategia,
