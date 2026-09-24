@@ -356,7 +356,18 @@
     body * { visibility: hidden; }
     #ticketContenido, #ticketContenido * { visibility: visible; }
     #ticketContenido { position: absolute; top: 0; left: 0; width: 100%; font-size: 14px; }
+    #etiquetaContenido, #etiquetaContenido * { visibility: visible; }
+    #etiquetaContenido { position: absolute; top: 0; left: 0; width: 100%; }
   }
+  .etiqueta-item {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    width: 45mm; height: 28mm; border: 1px dashed #999; box-sizing: border-box;
+    padding: 2mm; text-align: center; break-inside: avoid;
+  }
+  .etiqueta-item .et-nombre { font-size: 10px; font-weight: 700; color: #000; line-height: 1.1; max-height: 22px; overflow: hidden; }
+  .etiqueta-item .et-precio { font-size: 11px; font-weight: 800; color: #000; margin-top: 1mm; }
+  .etiqueta-item svg { max-width: 100%; }
+  #etiquetaContenido { display: flex; flex-wrap: wrap; gap: 2mm; justify-content: center; }
 
 </style>
 </head>
@@ -830,8 +841,28 @@
   <div class="scan-status" id="scanStatus">Apunta la cámara al código de barras</div>
 </div>
 
+<div class="scan-overlay" id="etiquetaOverlay">
+  <div class="scan-header">
+    <h3>Etiqueta con código de barras</h3>
+    <button onclick="cerrarEtiqueta()">✕</button>
+  </div>
+  <div style="background:#fff; border-radius:12px; margin:0 16px; padding:14px; overflow:auto; max-height:60vh;">
+    <label for="etiquetaCantidad" style="color:var(--ink); margin-top:0;">Cantidad de etiquetas a imprimir</label>
+    <input id="etiquetaCantidad" type="number" min="1" max="60" value="1" oninput="renderEtiquetas()">
+    <div id="etiquetaContenido" style="margin-top:10px;"></div>
+  </div>
+  <div style="padding:14px 16px; display:flex; gap:10px; flex-wrap:wrap;">
+    <button class="btn btn-outline" style="margin-top:0; flex:1;" onclick="cerrarEtiqueta()">Cerrar</button>
+    <button class="btn btn-secondary" style="margin-top:0; flex:1;" onclick="descargarEtiquetaImagen()">📥 Descargar imagen</button>
+    <button class="btn btn-primary" style="margin-top:0; flex:1;" onclick="window.print()">🖨️ Imprimir</button>
+  </div>
+  <div class="hint" style="padding:0 16px 16px; color:#cbd5e1;">Cada etiqueta mide ~45×28mm. Si tu impresora es de rollo/térmica, en el diálogo de impresión ajusta el tamaño de papel; si es normal, imprime en una hoja de etiquetas autoadheribles y recorta. "Descargar imagen" te da un PNG del código para importarlo en apps como Polono.</div>
+  <canvas id="etiquetaCanvas" style="display:none;"></canvas>
+</div>
+
 </div><!-- /appShell -->
 
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
@@ -1636,6 +1667,70 @@ function setFiltroInventario(filtro) {
   renderInventario();
 }
 
+/* ---------- Etiquetas / código de barras ---------- */
+let etiquetaProductoId = null;
+
+function abrirEtiqueta(id) {
+  etiquetaProductoId = id;
+  document.getElementById("etiquetaCantidad").value = 1;
+  document.getElementById("etiquetaOverlay").classList.add("open");
+  renderEtiquetas();
+}
+
+function cerrarEtiqueta() {
+  document.getElementById("etiquetaOverlay").classList.remove("open");
+  etiquetaProductoId = null;
+}
+
+function renderEtiquetas() {
+  const prod = state.productos.find(p => p.id === etiquetaProductoId);
+  const cont = document.getElementById("etiquetaContenido");
+  if (!prod) { cont.innerHTML = ""; return; }
+  const valor = prod.barras || prod.codigo;
+  let cantidad = parseInt(document.getElementById("etiquetaCantidad").value, 10) || 1;
+  if (cantidad < 1) cantidad = 1;
+  if (cantidad > 60) cantidad = 60;
+  let html = "";
+  for (let i = 0; i < cantidad; i++) {
+    html += `
+      <div class="etiqueta-item">
+        <div class="et-nombre">${escapeHtml(prod.nombre)}</div>
+        <svg class="et-svg-${i}"></svg>
+        <div class="et-precio">${moneda(prod.precio)}</div>
+      </div>`;
+  }
+  cont.innerHTML = html;
+  for (let i = 0; i < cantidad; i++) {
+    try {
+      JsBarcode(cont.querySelector(".et-svg-" + i), valor, {
+        format: "CODE128", width: 1.4, height: 34, fontSize: 10, margin: 2, displayValue: true
+      });
+    } catch (e) {
+      console.error("No se pudo generar el código de barras", e);
+    }
+  }
+}
+
+function descargarEtiquetaImagen() {
+  const prod = state.productos.find(p => p.id === etiquetaProductoId);
+  if (!prod) return;
+  const valor = prod.barras || prod.codigo;
+  const canvas = document.getElementById("etiquetaCanvas");
+  try {
+    JsBarcode(canvas, valor, {
+      format: "CODE128", width: 3, height: 90, fontSize: 24, margin: 14, displayValue: true
+    });
+  } catch (e) {
+    console.error("No se pudo generar la imagen del código", e);
+    mostrarToast("No se pudo generar la imagen");
+    return;
+  }
+  const link = document.createElement("a");
+  link.download = "codigo-" + valor + ".png";
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+}
+
 function cambiarEstadoProducto(id) {
   const prod = state.productos.find(p => p.id === id);
   if (!prod) return;
@@ -1693,6 +1788,7 @@ function renderInventario() {
       <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
         <div class="price">${moneda(p.precio)}</div>
         <button class="btn btn-outline btn-sm" onclick="editarProducto('${p.id}')">✏️ Editar</button>
+        <button class="btn btn-secondary btn-sm" onclick="abrirEtiqueta('${p.id}')">🏷️ Etiqueta</button>
         <button class="btn ${activo ? 'btn-danger' : 'btn-success'} btn-sm" onclick="cambiarEstadoProducto('${p.id}')">${activo ? '🚫 Desactivar' : '♻️ Reactivar'}</button>
       </div>
     </div>
