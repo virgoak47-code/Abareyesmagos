@@ -6,56 +6,35 @@
 <title>Los Reyes Magos — POS</title>
 <style>
   :root {
-    --cream: #F4F7FC;
-    --ink: #16233E;
-    --ink-soft: #64748B;
-    --line: #E2E8F0;
-    --red: #2563EB;
-    --red-dark: #1D4ED8;
-    --gold: #EA580C;
-    --gold-soft: #FFEDD9;
-    --green: #16A34A;
-    --green-soft: #DCFCE7;
-    --amber: #D97706;
-    --amber-soft: #FEF3C7;
-    --purple: #7C3AED;
-    --purple-soft: #EDE4FD;
-    --pink: #DB2777;
-    --pink-soft: #FCE0EE;
-    --navy: #10193B;
-    --navy-soft: #1B2A55;
-    --card: #FFFFFF;
-    --radius: 14px;
-    --shadow: 0 2px 8px rgba(16,25,59,0.08);
+    --cream: #0B1220;
+    --ink: #F3F6FC;
+    --ink-soft: #93A0C2;
+    --line: rgba(255,255,255,0.09);
+    --red: #3B82F6;
+    --red-dark: #2563EB;
+    --danger: #F87171;
+    --danger-soft: rgba(248,113,113,0.15);
+    --gold: #E3B23C;
+    --gold-dark: #B9862A;
+    --gold-soft: rgba(227,178,60,0.15);
+    --green: #22C55E;
+    --green-soft: rgba(34,197,94,0.15);
+    --amber: #F59E0B;
+    --amber-soft: rgba(245,158,11,0.15);
+    --purple: #8B5CF6;
+    --purple-soft: rgba(139,92,246,0.15);
+    --pink: #EC4899;
+    --pink-soft: rgba(236,72,153,0.15);
+    --navy: #070C1A;
+    --navy-soft: #101A33;
+    --card: #121C36;
+    --card-2: #182545;
+    --radius: 16px;
+    --shadow: 0 10px 28px rgba(0,0,0,0.35);
+    --navh: 68px;
     padding-top: env(safe-area-inset-top, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
     box-sizing: border-box;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --cream: #0F1526;
-      --ink: #EAF0FB;
-      --ink-soft: #97A3BE;
-      --line: #26314D;
-      --card: #171F35;
-      --gold-soft: #402507;
-      --green-soft: #0E2A19;
-      --amber-soft: #35270A;
-      --purple-soft: #26193F;
-      --pink-soft: #3A1329;
-    }
-  }
-  :root[data-theme="dark"] {
-    --cream: #0F1526;
-    --ink: #EAF0FB;
-    --ink-soft: #97A3BE;
-    --line: #26314D;
-    --card: #171F35;
-    --gold-soft: #402507;
-    --green-soft: #0E2A19;
-    --amber-soft: #35270A;
-    --purple-soft: #26193F;
-    --pink-soft: #3A1329;
   }
   html { scroll-padding-top: env(safe-area-inset-top, 0px); height: 100%; }
   * { box-sizing: border-box; }
@@ -71,48 +50,56 @@
     position: sticky;
     top: 0;
     padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 14px;
-    background: var(--navy);
+    background: linear-gradient(135deg, #0A1226 0%, #101E42 100%);
     color: #fff;
     z-index: 20;
-    box-shadow: var(--shadow);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.35);
+    border-bottom: 1px solid rgba(227,178,60,0.18);
   }
   header h1 {
     margin: 0;
-    font-size: 19px;
-    font-weight: 700;
+    font-size: 18px;
+    font-weight: 800;
     letter-spacing: 0.2px;
   }
+  header h1::before { content: "👑 "; }
   header p {
     margin: 2px 0 0;
-    font-size: 12.5px;
-    opacity: 0.85;
+    font-size: 12px;
+    opacity: 0.75;
   }
   nav {
     display: flex;
-    gap: 6px;
-    padding: 8px 10px;
-    background: var(--card);
-    border-bottom: 1px solid var(--line);
+    gap: 2px;
+    padding: 8px 6px calc(8px + env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(180deg, #0D1730 0%, #070C1A 100%);
+    border-top: 1px solid rgba(227,178,60,0.15);
     overflow-x: auto;
-    position: sticky;
-    top: calc(58px + env(safe-area-inset-top, 0px));
-    z-index: 19;
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 30;
+    box-shadow: 0 -8px 20px rgba(0,0,0,0.35);
   }
   nav button {
-    flex: none;
-    border: 1px solid var(--line);
+    flex: 1;
+    min-width: 64px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    border: none;
     background: transparent;
     color: var(--ink-soft);
-    padding: 8px 13px;
-    border-radius: 999px;
-    font-size: 13.5px;
+    padding: 6px 4px;
+    border-radius: 12px;
+    font-size: 10px;
     font-weight: 600;
     cursor: pointer;
   }
+  nav button .nic { font-size: 18px; line-height: 1; }
   nav button.active {
-    background: var(--red);
-    border-color: var(--red);
-    color: #fff;
+    background: rgba(227,178,60,0.12);
+    color: var(--gold);
   }
   .dash-grid {
     display: grid;
@@ -126,22 +113,23 @@
     align-items: flex-start;
     gap: 8px;
     border: none;
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 14px;
     color: #fff;
     font-weight: 700;
     font-size: 14px;
     cursor: pointer;
     text-align: left;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.28);
   }
   .dash-btn .ic { font-size: 20px; }
   .dash-btn .sub { font-weight: 500; font-size: 11.5px; opacity: 0.9; }
-  .dash-btn.c-blue { background: var(--red); }
-  .dash-btn.c-green { background: var(--green); }
-  .dash-btn.c-orange { background: var(--gold); }
-  .dash-btn.c-purple { background: var(--purple); }
-  .dash-btn.c-teal { background: #0891B2; }
-  .dash-btn.c-pink { background: var(--pink); }
+  .dash-btn.c-blue { background: linear-gradient(135deg, var(--red), var(--red-dark)); }
+  .dash-btn.c-green { background: linear-gradient(135deg, #2FD670, var(--green)); }
+  .dash-btn.c-orange { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #1A1204; }
+  .dash-btn.c-purple { background: linear-gradient(135deg, #A78BFA, var(--purple)); }
+  .dash-btn.c-teal { background: linear-gradient(135deg, #22D3C3, #0E8A83); }
+  .dash-btn.c-pink { background: linear-gradient(135deg, #F472B6, var(--pink)); }
   .stat-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -150,7 +138,7 @@
   .stat-mini {
     background: var(--card);
     border: 1px solid var(--line);
-    border-radius: 10px;
+    border-radius: 12px;
     padding: 10px;
     text-align: center;
   }
@@ -167,14 +155,14 @@
     gap: 8px;
   }
   .stat-card {
-    border-radius: 10px;
+    border-radius: 12px;
     padding: 10px 12px;
   }
   .stat-card .lbl { font-size: 11px; opacity: 0.85; }
   .stat-card .val { font-weight: 800; font-size: 16px; margin-top: 2px; }
-  .stat-card.blue { background: rgba(37,99,235,0.1); color: var(--red); }
+  .stat-card.blue { background: rgba(59,130,246,0.14); color: #7AAAF7; }
   .stat-card.green { background: var(--green-soft); color: var(--green); }
-  .stat-card.purple { background: var(--purple-soft); color: var(--purple); }
+  .stat-card.purple { background: var(--purple-soft); color: #B79CF9; }
   .stat-card.orange { background: var(--gold-soft); color: var(--gold); }
   .pay-grid {
     display: grid;
@@ -183,15 +171,15 @@
     margin-top: 10px;
   }
   .pay-btn {
-    border: none; border-radius: 10px; padding: 12px 8px;
+    border: none; border-radius: 12px; padding: 13px 8px;
     color: #fff; font-weight: 700; font-size: 13.5px; cursor: pointer;
   }
   .pay-btn.efectivo { background: var(--green); }
   .pay-btn.tarjeta { background: var(--red); }
   .pay-btn.transferencia { background: var(--purple); }
-  .pay-btn.fiado { background: var(--gold); }
+  .pay-btn.fiado { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #1A1204; }
   main {
-    padding: 14px 14px 100px;
+    padding: 14px 14px calc(88px + env(safe-area-inset-bottom, 0px));
     max-width: 640px;
     margin: 0 auto;
   }
@@ -218,13 +206,14 @@
   }
   input, select {
     width: 100%;
-    padding: 10px 11px;
+    padding: 11px 12px;
     border: 1px solid var(--line);
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 15px;
-    background: var(--cream);
+    background: var(--card-2);
     color: var(--ink);
   }
+  input::placeholder { color: var(--ink-soft); }
   input:focus, select:focus, button:focus-visible {
     outline: 2px solid var(--gold);
     outline-offset: 1px;
@@ -234,24 +223,24 @@
   .btn {
     display: inline-block;
     border: none;
-    border-radius: 8px;
-    padding: 11px 16px;
+    border-radius: 11px;
+    padding: 12px 16px;
     font-size: 14.5px;
-    font-weight: 700;
+    font-weight: 800;
     cursor: pointer;
     width: 100%;
     margin-top: 12px;
   }
-  .btn-primary { background: var(--red); color: #fff; }
-  .btn-primary:active { background: var(--red-dark); }
+  .btn-primary { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #1A1204; box-shadow: 0 6px 16px rgba(227,178,60,0.28); }
+  .btn-primary:active { filter: brightness(0.95); }
   .btn-secondary { background: var(--gold-soft); color: var(--gold); }
   .btn-outline { background: transparent; border: 1px solid var(--line); color: var(--ink); }
-  .btn-danger { background: #F4DEDA; color: var(--red-dark); }
+  .btn-danger { background: var(--danger-soft); color: var(--danger); }
   .btn-success { background: var(--green-soft); color: var(--green); }
   .inv-filters { display:flex; gap:6px; margin:0 0 10px; overflow-x:auto; }
   .inv-filter { flex:none; border:1px solid var(--line); background:transparent; color:var(--ink-soft); padding:7px 11px; border-radius:999px; font-size:12.5px; font-weight:700; cursor:pointer; }
-  .inv-filter.active { background:var(--red); border-color:var(--red); color:#fff; }
-  .prod.inactive { opacity:.72; border-style:dashed; }
+  .inv-filter.active { background:var(--gold); border-color:var(--gold); color:#1A1204; }
+  .prod.inactive { opacity:.6; border-style:dashed; }
   .badge-inactive { background:var(--line); color:var(--ink-soft); }
   .btn-sm { width: auto; padding: 7px 12px; font-size: 13px; margin-top: 0; }
   .prod-list { display: flex; flex-direction: column; gap: 8px; }
@@ -260,12 +249,13 @@
     justify-content: space-between;
     align-items: center;
     border: 1px solid var(--line);
-    border-radius: 8px;
+    background: var(--card-2);
+    border-radius: 12px;
     padding: 10px 12px;
     gap: 10px;
   }
   .prod .info { min-width: 0; }
-  .prod .name { font-weight: 600; font-size: 14.5px; }
+  .prod .name { font-weight: 700; font-size: 14.5px; }
   .prod .meta { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
   .badge {
     display: inline-block;
@@ -299,10 +289,11 @@
   }
   .cart-bar {
     position: fixed;
-    left: 0; right: 0; bottom: 0;
-    padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px));
-    background: var(--card);
+    left: 0; right: 0; bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+    padding: 10px 14px;
+    background: var(--card-2);
     border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -312,36 +303,37 @@
   .cart-bar .total { font-size: 16px; font-weight: 800; }
   .cart-bar .total span { font-size: 12px; font-weight: 500; color: var(--ink-soft); display: block; }
   .cart-bar button {
-    background: var(--red); color: #fff; border: none;
-    padding: 11px 20px; border-radius: 8px; font-weight: 700; font-size: 14px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #1A1204; border: none;
+    padding: 12px 22px; border-radius: 10px; font-weight: 800; font-size: 14px;
+    box-shadow: 0 6px 16px rgba(227,178,60,0.3);
   }
   table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
   th, td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--line); }
   th { color: var(--ink-soft); font-weight: 600; font-size: 11.5px; text-transform: none; }
   .qty-ctrl { display: flex; align-items: center; gap: 6px; }
   .qty-ctrl button {
-    width: 26px; height: 26px; border-radius: 6px; border: 1px solid var(--line);
-    background: var(--cream); font-weight: 700; font-size: 15px; cursor: pointer;
+    width: 26px; height: 26px; border-radius: 7px; border: 1px solid var(--line);
+    background: var(--card-2); color: var(--ink); font-weight: 700; font-size: 15px; cursor: pointer;
   }
   .kv { display: flex; justify-content: space-between; padding: 5px 0; font-size: 14px; }
   .kv .label { color: var(--ink-soft); }
   .toast {
-    position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%);
-    background: var(--green); color: #fff; padding: 9px 16px; border-radius: 999px;
-    font-size: 13px; font-weight: 600; z-index: 40; box-shadow: var(--shadow);
+    position: fixed; left: 50%; bottom: calc(78px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+    background: var(--green); color: #06230F; padding: 9px 16px; border-radius: 999px;
+    font-size: 13px; font-weight: 700; z-index: 40; box-shadow: var(--shadow);
     opacity: 0; transition: opacity .2s; pointer-events: none;
   }
   .toast.show { opacity: 1; }
   .hint { font-size: 12px; color: var(--ink-soft); margin-top: 8px; line-height: 1.5; }
   .scan-btn {
     display: flex; align-items: center; justify-content: center; gap: 6px;
-    width: 100%; margin-top: 8px; padding: 11px; border-radius: 8px;
+    width: 100%; margin-top: 8px; padding: 11px; border-radius: 10px;
     background: var(--green-soft); color: var(--green); border: none;
     font-weight: 700; font-size: 14px; cursor: pointer;
   }
   .scan-overlay {
     display: none;
-    position: fixed; inset: 0; background: rgba(28,20,38,0.92);
+    position: fixed; inset: 0; background: rgba(4,8,20,0.96);
     z-index: 100; flex-direction: column;
   }
   .scan-overlay.open { display: flex; }
@@ -365,6 +357,7 @@
     #ticketContenido, #ticketContenido * { visibility: visible; }
     #ticketContenido { position: absolute; top: 0; left: 0; width: 100%; font-size: 14px; }
   }
+
 </style>
 </head>
 <body>
@@ -395,14 +388,14 @@
 </header>
 
 <nav id="tabs">
-  <button data-view="inicio" class="active">Inicio</button>
-  <button data-view="vender">Vender</button>
-  <button data-view="productos" data-solo-dueno="1">Productos</button>
-  <button data-view="compras" data-solo-dueno="1">Recibir compra</button>
-  <button data-view="caja" data-solo-dueno="1">Corte de caja</button>
-  <button data-view="reportes" data-solo-dueno="1">Reportes</button>
-  <button data-view="fiado">Fiado</button>
-  <button data-view="ajustes" data-solo-dueno="1">Ajustes</button>
+  <button data-view="inicio" class="active"><span class="nic">🏠</span>Inicio</button>
+  <button data-view="vender"><span class="nic">🛒</span>Vender</button>
+  <button data-view="productos" data-solo-dueno="1"><span class="nic">📦</span>Productos</button>
+  <button data-view="compras" data-solo-dueno="1"><span class="nic">🚚</span>Compra</button>
+  <button data-view="caja" data-solo-dueno="1"><span class="nic">🧾</span>Caja</button>
+  <button data-view="reportes" data-solo-dueno="1"><span class="nic">📊</span>Reportes</button>
+  <button data-view="fiado"><span class="nic">🤝</span>Fiado</button>
+  <button data-view="ajustes" data-solo-dueno="1"><span class="nic">⚙️</span>Ajustes</button>
 </nav>
 
 <div class="scan-overlay" id="rolOverlay">
@@ -2496,5 +2489,10 @@ renderCompras();
 renderInicio();
 aplicarRol();
 </script>
+
+
+
+<!-- ETAPA VENTA · CAPA VISUAL FINAL -->
+
 </body>
 </html>
