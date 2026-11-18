@@ -4,33 +4,44 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Los Reyes Magos — POS</title>
+<meta name="theme-color" content="#f6f1e4">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
+  /* ===== Tema "tiendita": crema, verde bosque y dorado ===== */
   :root {
-    --cream: #0B1220;
-    --ink: #F3F6FC;
-    --ink-soft: #93A0C2;
-    --line: rgba(255,255,255,0.09);
-    --red: #3B82F6;
-    --red-dark: #2563EB;
-    --danger: #F87171;
-    --danger-soft: rgba(248,113,113,0.15);
-    --gold: #E3B23C;
-    --gold-dark: #B9862A;
-    --gold-soft: rgba(227,178,60,0.15);
-    --green: #22C55E;
-    --green-soft: rgba(34,197,94,0.15);
-    --amber: #F59E0B;
-    --amber-soft: rgba(245,158,11,0.15);
-    --purple: #8B5CF6;
-    --purple-soft: rgba(139,92,246,0.15);
-    --pink: #EC4899;
-    --pink-soft: rgba(236,72,153,0.15);
-    --navy: #070C1A;
-    --navy-soft: #101A33;
-    --card: #121C36;
-    --card-2: #182545;
+    --cream: #f6f1e4;
+    --ink: #20271f;
+    --ink-soft: #6a6f62;
+    --muted: #6a6f62;
+    --line: #d8cdb0;
+    --red: #c0392b;
+    --red-dark: #9c2d22;
+    --blue: #2b6f9e;
+    --danger: #c0392b;
+    --danger-soft: rgba(192,57,43,0.11);
+    --gold: #8f6208;
+    --gold-dark: #6f4a05;
+    --gold-soft: rgba(224,168,29,0.18);
+    --accent: #e0a81d;
+    --green: #2f7d4f;
+    --green-soft: rgba(47,125,79,0.12);
+    --amber: #b36a0b;
+    --amber-soft: rgba(217,138,31,0.16);
+    --purple: #6d4fc2;
+    --purple-soft: rgba(109,79,194,0.12);
+    --pink: #be3a74;
+    --pink-soft: rgba(190,58,116,0.11);
+    --navy: #1f5b3a;
+    --navy-soft: #2a6e49;
+    --primary: #1f5b3a;
+    --card: #fffdf6;
+    --card-2: #f3ecda;
     --radius: 16px;
-    --shadow: 0 10px 28px rgba(0,0,0,0.35);
+    --shadow: 0 1px 2px rgba(32,39,31,0.08);
+    --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+    --font-body: "Inter Tight", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     --navh: 68px;
     padding-top: env(safe-area-inset-top, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -43,64 +54,87 @@
     margin: 0;
     background: var(--cream);
     color: var(--ink);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
   }
+
+  /* ----- Encabezado ----- */
   header {
     position: sticky;
     top: 0;
-    padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 14px;
-    background: linear-gradient(135deg, #0A1226 0%, #101E42 100%);
-    color: #fff;
+    padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 12px;
+    background: var(--cream);
+    color: var(--ink);
     z-index: 20;
-    box-shadow: 0 4px 18px rgba(0,0,0,0.35);
-    border-bottom: 1px solid rgba(227,178,60,0.18);
+    border-bottom: 1px solid var(--line);
   }
   header h1 {
     margin: 0;
-    font-size: 18px;
-    font-weight: 800;
-    letter-spacing: 0.2px;
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1.1;
+    color: var(--primary);
   }
-  header h1::before { content: "👑 "; }
+  header h1::before { content: none; }
   header p {
-    margin: 2px 0 0;
-    font-size: 12px;
-    opacity: 0.75;
+    margin: 3px 0 0;
+    font-size: 12.5px;
+    color: var(--ink-soft);
   }
+  .rol-btn {
+    background: var(--card);
+    color: var(--primary);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 7px 13px;
+    font-family: var(--font-body);
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  /* ----- Barra de navegación inferior ----- */
   nav {
     display: flex;
     gap: 2px;
-    padding: 8px 6px calc(8px + env(safe-area-inset-bottom, 0px));
-    background: linear-gradient(180deg, #0D1730 0%, #070C1A 100%);
-    border-top: 1px solid rgba(227,178,60,0.15);
+    padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px));
+    background: var(--card);
+    border-top: 1px solid var(--line);
     overflow-x: auto;
     position: fixed;
     left: 0; right: 0; bottom: 0;
     z-index: 30;
-    box-shadow: 0 -8px 20px rgba(0,0,0,0.35);
   }
   nav button {
     flex: 1;
-    min-width: 64px;
+    min-width: 66px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
+    gap: 3px;
     border: none;
     background: transparent;
     color: var(--ink-soft);
-    padding: 6px 4px;
-    border-radius: 12px;
-    font-size: 10px;
-    font-weight: 600;
+    padding: 8px 4px 6px;
+    border-radius: 10px;
+    font-family: var(--font-body);
+    font-size: 10.5px;
+    font-weight: 500;
     cursor: pointer;
+    box-shadow: inset 0 3px 0 transparent;
   }
-  nav button .nic { font-size: 18px; line-height: 1; }
+  nav button .nic { font-size: 19px; line-height: 1; filter: grayscale(1) opacity(0.65); }
   nav button.active {
-    background: rgba(227,178,60,0.12);
-    color: var(--gold);
+    background: transparent;
+    color: var(--primary);
+    font-weight: 600;
+    box-shadow: inset 0 3px 0 var(--accent);
   }
+  nav button.active .nic { filter: none; }
+
+  /* ----- Inicio: accesos rápidos ----- */
   .dash-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -112,24 +146,34 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
-    border: none;
+    border: 1px solid var(--line);
     border-radius: 14px;
     padding: 14px;
-    color: #fff;
-    font-weight: 700;
-    font-size: 14px;
+    background: var(--card);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 14.5px;
     cursor: pointer;
     text-align: left;
-    box-shadow: 0 6px 16px rgba(0,0,0,0.28);
+    box-shadow: var(--shadow);
   }
-  .dash-btn .ic { font-size: 20px; }
-  .dash-btn .sub { font-weight: 500; font-size: 11.5px; opacity: 0.9; }
-  .dash-btn.c-blue { background: linear-gradient(135deg, var(--red), var(--red-dark)); }
-  .dash-btn.c-green { background: linear-gradient(135deg, #2FD670, var(--green)); }
-  .dash-btn.c-orange { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #1A1204; }
-  .dash-btn.c-purple { background: linear-gradient(135deg, #A78BFA, var(--purple)); }
-  .dash-btn.c-teal { background: linear-gradient(135deg, #22D3C3, #0E8A83); }
-  .dash-btn.c-pink { background: linear-gradient(135deg, #F472B6, var(--pink)); }
+  .dash-btn:active { background: var(--card-2); }
+  .dash-btn .ic {
+    width: 38px; height: 38px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 19px;
+    background: var(--card-2);
+  }
+  .dash-btn .sub { font-weight: 400; font-size: 12px; color: var(--ink-soft); }
+  .dash-btn.c-blue .ic { background: rgba(43,111,158,0.13); }
+  .dash-btn.c-green .ic { background: var(--green-soft); }
+  .dash-btn.c-orange .ic { background: var(--gold-soft); }
+  .dash-btn.c-purple .ic { background: var(--purple-soft); }
+  .dash-btn.c-teal .ic { background: rgba(14,138,131,0.13); }
+  .dash-btn.c-pink .ic { background: var(--pink-soft); }
+
+  /* ----- Indicadores ----- */
   .stat-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -143,12 +187,12 @@
     text-align: center;
   }
   .stat-mini .ic {
-    width: 26px; height: 26px; border-radius: 8px;
+    width: 28px; height: 28px; border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
-    margin: 0 auto 6px; font-size: 13px;
+    margin: 0 auto 6px; font-size: 14px;
   }
-  .stat-mini .val { font-weight: 800; font-size: 13.5px; }
-  .stat-mini .lbl { font-size: 10.5px; color: var(--ink-soft); margin-top: 2px; }
+  .stat-mini .val { font-family: var(--font-display); font-weight: 600; font-size: 16px; }
+  .stat-mini .lbl { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
   .stat-grid-4 {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -158,12 +202,14 @@
     border-radius: 12px;
     padding: 10px 12px;
   }
-  .stat-card .lbl { font-size: 11px; opacity: 0.85; }
-  .stat-card .val { font-weight: 800; font-size: 16px; margin-top: 2px; }
-  .stat-card.blue { background: rgba(59,130,246,0.14); color: #7AAAF7; }
+  .stat-card .lbl { font-size: 11.5px; opacity: 0.9; }
+  .stat-card .val { font-family: var(--font-display); font-weight: 600; font-size: 18px; margin-top: 2px; }
+  .stat-card.blue { background: rgba(43,111,158,0.13); color: var(--blue); }
   .stat-card.green { background: var(--green-soft); color: var(--green); }
-  .stat-card.purple { background: var(--purple-soft); color: #B79CF9; }
+  .stat-card.purple { background: var(--purple-soft); color: var(--purple); }
   .stat-card.orange { background: var(--gold-soft); color: var(--gold); }
+
+  /* ----- Formas de pago ----- */
   .pay-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -171,13 +217,15 @@
     margin-top: 10px;
   }
   .pay-btn {
-    border: none; border-radius: 12px; padding: 13px 8px;
-    color: #fff; font-weight: 700; font-size: 13.5px; cursor: pointer;
+    border: none; border-radius: 12px; padding: 14px 8px;
+    color: #fffdf6; font-family: var(--font-body); font-weight: 600; font-size: 14px; cursor: pointer;
   }
   .pay-btn.efectivo { background: var(--green); }
-  .pay-btn.tarjeta { background: var(--red); }
+  .pay-btn.tarjeta { background: var(--blue); }
   .pay-btn.transferencia { background: var(--purple); }
-  .pay-btn.fiado { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #1A1204; }
+  .pay-btn.fiado { background: var(--accent); color: var(--ink); }
+
+  /* ----- Estructura ----- */
   main {
     padding: 14px 14px calc(88px + env(safe-area-inset-bottom, 0px));
     max-width: 640px;
@@ -189,60 +237,68 @@
     background: var(--card);
     border: 1px solid var(--line);
     border-radius: var(--radius);
-    padding: 14px;
+    padding: 16px;
     margin-bottom: 12px;
     box-shadow: var(--shadow);
   }
   .card h2 {
     margin: 0 0 10px;
-    font-size: 15px;
-    font-weight: 700;
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 600;
   }
   label {
     display: block;
     font-size: 12.5px;
+    font-weight: 500;
     color: var(--ink-soft);
     margin: 10px 0 4px;
   }
   input, select {
     width: 100%;
-    padding: 11px 12px;
+    padding: 12px 13px;
     border: 1px solid var(--line);
     border-radius: 10px;
+    font-family: var(--font-body);
     font-size: 15px;
     background: var(--card-2);
     color: var(--ink);
   }
-  input::placeholder { color: var(--ink-soft); }
+  input::placeholder { color: #8f927f; }
   input:focus, select:focus, button:focus-visible {
-    outline: 2px solid var(--gold);
+    outline: 2px solid var(--primary);
     outline-offset: 1px;
   }
   .row { display: flex; gap: 10px; }
   .row > * { flex: 1; }
+
+  /* ----- Botones ----- */
   .btn {
     display: inline-block;
     border: none;
-    border-radius: 11px;
-    padding: 12px 16px;
-    font-size: 14.5px;
-    font-weight: 800;
+    border-radius: 12px;
+    padding: 13px 16px;
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 600;
     cursor: pointer;
     width: 100%;
     margin-top: 12px;
   }
-  .btn-primary { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #1A1204; box-shadow: 0 6px 16px rgba(227,178,60,0.28); }
-  .btn-primary:active { filter: brightness(0.95); }
+  .btn-primary { background: var(--primary); color: #fffdf6; }
+  .btn-primary:active { filter: brightness(1.15); }
   .btn-secondary { background: var(--gold-soft); color: var(--gold); }
   .btn-outline { background: transparent; border: 1px solid var(--line); color: var(--ink); }
   .btn-danger { background: var(--danger-soft); color: var(--danger); }
   .btn-success { background: var(--green-soft); color: var(--green); }
-  .inv-filters { display:flex; gap:6px; margin:0 0 10px; overflow-x:auto; }
-  .inv-filter { flex:none; border:1px solid var(--line); background:transparent; color:var(--ink-soft); padding:7px 11px; border-radius:999px; font-size:12.5px; font-weight:700; cursor:pointer; }
-  .inv-filter.active { background:var(--gold); border-color:var(--gold); color:#1A1204; }
-  .prod.inactive { opacity:.6; border-style:dashed; }
-  .badge-inactive { background:var(--line); color:var(--ink-soft); }
-  .btn-sm { width: auto; padding: 7px 12px; font-size: 13px; margin-top: 0; }
+  .btn-sm { width: auto; padding: 8px 13px; font-size: 13px; margin-top: 0; }
+
+  /* ----- Filtros y productos ----- */
+  .inv-filters { display: flex; gap: 6px; margin: 0 0 10px; overflow-x: auto; }
+  .inv-filter { flex: 1; min-width: 90px; border: 1px solid var(--line); background: var(--card); color: var(--ink-soft); border-radius: 999px; padding: 9px 10px; font-family: var(--font-body); font-size: 12.5px; font-weight: 600; cursor: pointer; }
+  .inv-filter.active { background: var(--primary); border-color: var(--primary); color: #fffdf6; }
+  .prod.inactive { opacity: .62; border-style: dashed; }
+  .badge-inactive { background: var(--line); color: var(--ink-soft); }
   .prod-list { display: flex; flex-direction: column; gap: 8px; }
   .prod {
     display: flex;
@@ -251,17 +307,17 @@
     border: 1px solid var(--line);
     background: var(--card-2);
     border-radius: 12px;
-    padding: 10px 12px;
+    padding: 11px 13px;
     gap: 10px;
   }
   .prod .info { min-width: 0; }
-  .prod .name { font-weight: 700; font-size: 14.5px; }
+  .prod .name { font-weight: 600; font-size: 14.5px; }
   .prod .meta { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
   .badge {
     display: inline-block;
     font-size: 10.5px;
-    font-weight: 700;
-    padding: 2px 7px;
+    font-weight: 600;
+    padding: 2px 8px;
     border-radius: 999px;
     margin-right: 5px;
   }
@@ -269,29 +325,26 @@
   .badge-pap { background: var(--gold-soft); color: var(--gold); }
   .badge-estrategia { background: var(--line); color: var(--ink-soft); }
   .margen-tag { font-size: 11.5px; color: var(--ink-soft); }
-  .stock-low { color: var(--amber); font-weight: 700; }
-  .price { font-weight: 700; white-space: nowrap; }
+  .stock-low { color: var(--amber); font-weight: 600; }
+  .price { font-family: var(--font-display); font-weight: 600; white-space: nowrap; color: var(--primary); }
 
-  .inv-filters { display:flex; gap:6px; margin:0 0 10px; overflow-x:auto; }
-  .inv-filter { flex:1; min-width:90px; border:1px solid var(--line); background:transparent; color:var(--ink-soft); border-radius:999px; padding:8px 10px; font-size:12px; font-weight:700; cursor:pointer; }
-  .inv-filter.active { background:var(--red); border-color:var(--red); color:#fff; }
-  .prod.inactive { opacity:.68; }
-  .badge-inactive { background:var(--line); color:var(--ink-soft); }
-  .btn-success { background:var(--green-soft); color:var(--green); }
-  .caja-status { padding:10px 12px; border-radius:10px; margin-bottom:12px; font-size:13px; font-weight:700; }
-  .caja-status.open { background:var(--green-soft); color:var(--green); }
-  .caja-status.closed { background:var(--amber-soft); color:var(--amber); }
+  /* ----- Caja ----- */
+  .caja-status { padding: 10px 12px; border-radius: 10px; margin-bottom: 12px; font-size: 13px; font-weight: 600; }
+  .caja-status.open { background: var(--green-soft); color: var(--green); }
+  .caja-status.closed { background: var(--amber-soft); color: var(--amber); }
   .empty {
     text-align: center;
     color: var(--ink-soft);
     font-size: 13.5px;
     padding: 24px 10px;
   }
+
+  /* ----- Barra del carrito ----- */
   .cart-bar {
     position: fixed;
     left: 0; right: 0; bottom: calc(64px + env(safe-area-inset-bottom, 0px));
     padding: 10px 14px;
-    background: var(--card-2);
+    background: var(--card);
     border-top: 1px solid var(--line);
     border-bottom: 1px solid var(--line);
     display: flex;
@@ -300,40 +353,44 @@
     gap: 10px;
     z-index: 25;
   }
-  .cart-bar .total { font-size: 16px; font-weight: 800; }
-  .cart-bar .total span { font-size: 12px; font-weight: 500; color: var(--ink-soft); display: block; }
+  .cart-bar .total { font-family: var(--font-display); font-size: 20px; font-weight: 600; }
+  .cart-bar .total span { font-family: var(--font-body); font-size: 12px; font-weight: 400; color: var(--ink-soft); display: block; }
   .cart-bar button {
-    background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #1A1204; border: none;
-    padding: 12px 22px; border-radius: 10px; font-weight: 800; font-size: 14px;
-    box-shadow: 0 6px 16px rgba(227,178,60,0.3);
+    background: var(--primary); color: #fffdf6; border: none;
+    padding: 13px 24px; border-radius: 12px; font-family: var(--font-body); font-weight: 600; font-size: 15px;
   }
+
+  /* ----- Tablas y detalles ----- */
   table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-  th, td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--line); }
-  th { color: var(--ink-soft); font-weight: 600; font-size: 11.5px; text-transform: none; }
+  th, td { text-align: left; padding: 7px 4px; border-bottom: 1px solid var(--line); }
+  th { color: var(--ink-soft); font-weight: 500; font-size: 11.5px; text-transform: none; }
   .qty-ctrl { display: flex; align-items: center; gap: 6px; }
   .qty-ctrl button {
-    width: 26px; height: 26px; border-radius: 7px; border: 1px solid var(--line);
-    background: var(--card-2); color: var(--ink); font-weight: 700; font-size: 15px; cursor: pointer;
+    width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--card); color: var(--ink); font-weight: 600; font-size: 16px; cursor: pointer;
   }
   .kv { display: flex; justify-content: space-between; padding: 5px 0; font-size: 14px; }
   .kv .label { color: var(--ink-soft); }
+  #pesoTotal, #inicioGananciaHoy, #cambioBox { font-family: var(--font-display); }
   .toast {
     position: fixed; left: 50%; bottom: calc(78px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
-    background: var(--green); color: #06230F; padding: 9px 16px; border-radius: 999px;
-    font-size: 13px; font-weight: 700; z-index: 40; box-shadow: var(--shadow);
+    background: var(--primary); color: #fffdf6; padding: 10px 18px; border-radius: 999px;
+    font-size: 13px; font-weight: 600; z-index: 40; box-shadow: 0 8px 24px rgba(32,39,31,0.25);
     opacity: 0; transition: opacity .2s; pointer-events: none;
   }
   .toast.show { opacity: 1; }
   .hint { font-size: 12px; color: var(--ink-soft); margin-top: 8px; line-height: 1.5; }
+
+  /* ----- Escáner y ventanas oscuras (cámara) ----- */
   .scan-btn {
     display: flex; align-items: center; justify-content: center; gap: 6px;
-    width: 100%; margin-top: 8px; padding: 11px; border-radius: 10px;
-    background: var(--green-soft); color: var(--green); border: none;
-    font-weight: 700; font-size: 14px; cursor: pointer;
+    width: 100%; margin-top: 8px; padding: 12px; border-radius: 10px;
+    background: var(--card); color: var(--primary); border: 1px solid var(--line);
+    font-family: var(--font-body); font-weight: 600; font-size: 14px; cursor: pointer;
   }
   .scan-overlay {
     display: none;
-    position: fixed; inset: 0; background: rgba(4,8,20,0.96);
+    position: fixed; inset: 0; background: rgba(20,28,22,0.95);
     z-index: 100; flex-direction: column;
   }
   .scan-overlay.open { display: flex; }
@@ -342,16 +399,18 @@
     padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 12px;
     color: #fff;
   }
-  .scan-header h3 { margin: 0; font-size: 15px; }
+  .scan-header h3 { margin: 0; font-family: var(--font-display); font-size: 17px; font-weight: 600; }
   .scan-header button {
     background: rgba(255,255,255,0.15); color: #fff; border: none;
-    width: 32px; height: 32px; border-radius: 999px; font-size: 16px; cursor: pointer;
+    width: 34px; height: 34px; border-radius: 999px; font-size: 16px; cursor: pointer;
   }
   #camReader { width: 100%; max-width: 480px; margin: 0 auto; }
   .scan-status {
     text-align: center; color: #fff; font-size: 13px; padding: 10px 20px;
     opacity: 0.8;
   }
+
+  /* ----- Impresión (ticket y etiquetas) ----- */
   @media print {
     body * { visibility: hidden; }
     #ticketContenido, #ticketContenido * { visibility: visible; }
@@ -368,7 +427,7 @@
   .etiqueta-item .et-precio { font-size: 11px; font-weight: 800; color: #000; margin-top: 1mm; }
   .etiqueta-item svg { max-width: 100%; }
   #etiquetaContenido { display: flex; flex-wrap: wrap; gap: 2mm; justify-content: center; }
-
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
 <body>
@@ -394,7 +453,7 @@
       <h1>Los Reyes Magos</h1>
       <p>Punto de venta — Abarrotes &amp; Papelería</p>
     </div>
-    <button id="btnRol" onclick="abrirCambioRol()" style="background:rgba(255,255,255,0.18); color:#fff; border:none; border-radius:999px; padding:6px 12px; font-size:12px; font-weight:700; white-space:nowrap;">👤 Dueño</button>
+    <button id="btnRol" class="rol-btn" onclick="abrirCambioRol()">👤 Dueño</button>
   </div>
 </header>
 
@@ -466,7 +525,7 @@
         <div class="lbl">Ventas del día</div>
       </div>
       <div class="stat-mini">
-        <div class="ic" style="background:rgba(37,99,235,0.12); color:var(--red);">💳</div>
+        <div class="ic" style="background:rgba(43,111,158,0.13); color:var(--blue);">💳</div>
         <div class="val" id="inicioEfectivoCaja">$0.00</div>
         <div class="lbl">Efectivo en caja</div>
       </div>
@@ -761,20 +820,20 @@
 
   <!-- REPORTES -->
   <section class="view" id="view-reportes">
-    <div class="card" style="background:linear-gradient(135deg,#111827,#1e293b); color:#fff; border:0;">
+    <div class="card" style="background:var(--navy); color:#fff; border:0;">
       <div style="display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap;">
         <div>
           <div style="font-size:24px; font-weight:900;">📊 Reportes</div>
           <div id="repFecha" style="margin-top:4px; opacity:.82; font-size:13px;">Resumen de ventas</div>
         </div>
-        <button class="btn btn-secondary" style="background:#fff; color:#111827; border:0;" onclick="renderReportes()">🔄 Actualizar</button>
+        <button class="btn btn-secondary" style="background:#fff; color:var(--navy); border:0;" onclick="renderReportes()">🔄 Actualizar</button>
       </div>
     </div>
 
     <div class="card">
       <h2>📊 Resumen de hoy</h2>
       <div class="stat-grid">
-        <div class="stat-mini"><div class="ic" style="background:rgba(37,99,235,0.12); color:var(--red);">🧾</div><div class="val" id="repHoyVentas">0</div><div class="lbl">Ventas de hoy</div></div>
+        <div class="stat-mini"><div class="ic" style="background:rgba(43,111,158,0.13); color:var(--blue);">🧾</div><div class="val" id="repHoyVentas">0</div><div class="lbl">Ventas de hoy</div></div>
         <div class="stat-mini"><div class="ic" style="background:var(--green-soft); color:var(--green);">💵</div><div class="val" id="repHoyIngresos">$0.00</div><div class="lbl">Ingresos de hoy</div></div>
         <div class="stat-mini"><div class="ic" style="background:var(--purple-soft); color:var(--purple);">📦</div><div class="val" id="repHoyArticulos">0</div><div class="lbl">Artículos vendidos</div></div>
         <div class="stat-mini"><div class="ic" style="background:rgba(245,158,11,0.12); color:#b45309;">🎟️</div><div class="val" id="repHoyTicket">$0.00</div><div class="lbl">Ticket promedio</div></div>
@@ -792,7 +851,7 @@
     <div class="card">
       <h2>📈 Resumen general</h2>
       <div class="stat-grid">
-        <div class="stat-mini"><div class="ic" style="background:rgba(37,99,235,0.12); color:var(--red);">🧾</div><div class="val" id="repNumVentas">0</div><div class="lbl">Ventas totales</div></div>
+        <div class="stat-mini"><div class="ic" style="background:rgba(43,111,158,0.13); color:var(--blue);">🧾</div><div class="val" id="repNumVentas">0</div><div class="lbl">Ventas totales</div></div>
         <div class="stat-mini"><div class="ic" style="background:var(--green-soft); color:var(--green);">💵</div><div class="val" id="repIngresos">$0.00</div><div class="lbl">Ingresos</div></div>
         <div class="stat-mini"><div class="ic" style="background:var(--purple-soft); color:var(--purple);">📈</div><div class="val" id="repGanancia">$0.00</div><div class="lbl">Ganancia estimada</div></div>
       </div>
@@ -827,7 +886,7 @@
   </div>
   <div style="padding:16px; max-width:420px; margin:0 auto; width:100%;">
     <div class="card" style="background:var(--card);">
-      <div id="pesoProductoNombre" style="font-size:18px; font-weight:800; color:#fff;"></div>
+      <div id="pesoProductoNombre" style="font-size:18px; font-weight:800; color:var(--ink);"></div>
       <div id="pesoPrecioKg" class="hint" style="margin-top:4px;"></div>
       <label for="pesoCantidad">Cantidad</label>
       <div class="row">
