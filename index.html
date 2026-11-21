@@ -783,7 +783,10 @@
       <div class="inv-cats" id="invCategorias" style="display:none;"></div>
     </div>
 
-    <button class="btn btn-outline" style="margin:0 0 10px;" onclick="abrirConteo()">🧮 Contar inventario</button>
+    <div style="display:flex; gap:10px; margin:0 0 10px;">
+      <button class="btn btn-outline" style="margin:0; flex:1;" onclick="abrirConteo()">🧮 Contar inventario</button>
+      <button class="btn btn-outline" style="margin:0; flex:1;" onclick="abrirCatalogo()">📚 Catálogo base</button>
+    </div>
 
     <div class="row-inv">
       <input id="invBuscar" placeholder="Buscar artículo…" autocomplete="off" style="margin:0;">
@@ -1165,6 +1168,25 @@
   </div>
 </div>
 
+<div class="scan-overlay" id="catalogoOverlay">
+  <div class="scan-header">
+    <h3>📚 Catálogo base</h3>
+    <button onclick="cerrarCatalogo()">✕</button>
+  </div>
+  <div style="margin:0 14px 10px;">
+    <div style="display:flex; gap:8px;">
+      <input id="catBuscar" placeholder="Nombre, marca o código de barras…" autocomplete="off" style="margin:0; flex:1;">
+      <button class="icon-btn" type="button" onclick="abrirEscaner('catBuscar')" aria-label="Escanear código">📷</button>
+    </div>
+    <select id="catSub" style="margin-top:8px;"></select>
+    <div class="hint" id="catInfo" style="color:#cbd5e1; margin-top:6px;"></div>
+  </div>
+  <div class="sheet" id="catLista"></div>
+  <div class="sheet-actions">
+    <button class="btn btn-outline" onclick="cerrarCatalogo()">Cerrar</button>
+  </div>
+</div>
+
 <div class="scan-overlay" id="scanOverlay">
   <div class="scan-header">
     <h3>Escanear código de barras</h3>
@@ -1487,11 +1509,12 @@ function cambiarPin() {
   mostrarToast("PIN actualizado");
 }
 
-function irADarDeAlta(codigo, nombre) {
+function irADarDeAlta(codigo, nombre, categoria) {
   irAVista("productos");
   abrirFormProducto();
   document.getElementById("pBarras").value = codigo || "";
   if (nombre) document.getElementById("pNombre").value = nombre;
+  if (categoria) { document.getElementById("pCategoria").value = categoria; document.getElementById("pMedida").value = "pieza"; }
   mostrarToast("Completa costo, precio y stock para guardarlo");
   setTimeout(() => document.getElementById(nombre ? "pCosto" : "pNombre").focus(), 120);
 }
@@ -2291,6 +2314,20 @@ async function buscarParaCompra() {
   if (!codigo) { cont.innerHTML = ""; return; }
   const prod = state.productos.find(p => p.barras === codigo || p.codigo === codigo);
   if (!prod) {
+    const cat = await cargarCatalogo();
+    const enCat = cat && cat.porBarras[codigo];
+    if (document.getElementById("cBarras").value.trim() !== codigo) return;
+    if (enCat) {
+      cont.innerHTML = `
+        <div class="prod">
+          <div class="info">
+            <div class="name">${escapeHtml(nombreCatalogo(enCat))}</div>
+            <div class="meta">Está en tu catálogo base, aún no en tu inventario</div>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="catAgregar('${enCat.barras}')">➕ Agregar a mi inventario</button>`;
+      return;
+    }
     cont.innerHTML = `<div class="empty">Buscando en el catálogo externo...</div>`;
     const info = await buscarOpenFoodFacts(codigo);
     if (info) {
@@ -3285,6 +3322,17 @@ async function revisarCodigoNuevo() {
   const ya = state.productos.find(p => p.barras === codigo || p.codigo === codigo);
   if (ya) { mostrarToast("Ya tienes este producto: " + ya.nombre); editarProducto(ya.id); return; }
   if (document.getElementById("pNombre").value.trim()) return;
+  const cat = await cargarCatalogo();
+  const enCat = cat && cat.porBarras[codigo];
+  if (enCat) {
+    if (!document.getElementById("pNombre").value.trim() && document.getElementById("pBarras").value.trim() === codigo) {
+      document.getElementById("pNombre").value = nombreCatalogo(enCat);
+      document.getElementById("pCategoria").value = enCat.cat;
+      document.getElementById("pMedida").value = "pieza";
+      mostrarToast("Nombre tomado de tu catálogo base; revísalo");
+    }
+    return;
+  }
   const info = await buscarOpenFoodFacts(codigo);
   const nombreEl = document.getElementById("pNombre");
   if (info && !nombreEl.value.trim() && document.getElementById("pBarras").value.trim() === codigo) {
@@ -3293,6 +3341,100 @@ async function revisarCodigoNuevo() {
     mostrarToast("Nombre encontrado en el catálogo; revísalo");
   }
 }
+
+
+/* ---------- Catálogo base (archivo catalogo.json del repositorio; NO se guarda en Firebase) ---------- */
+let CATALOGO = null, catalogoPromesa = null;
+
+function normBusqueda(s) {
+  return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+function cargarCatalogo() {
+  if (CATALOGO) return Promise.resolve(CATALOGO);
+  if (catalogoPromesa) return catalogoPromesa;
+  const intentar = (url) => fetch(url).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
+  catalogoPromesa = intentar("catalogo.json").catch(() => intentar("catalogo.txt")).then(j => {
+    const items = j.items.map(a => ({
+      barras: a[0], nombre: a[1], marca: a[2], pres: a[3], sub: j.subs[a[4]], cat: j.cats[a[4]],
+      key: normBusqueda(a[1] + " " + a[2] + " " + a[3])
+    }));
+    const porBarras = {};
+    items.forEach(it => { porBarras[it.barras] = it; });
+    CATALOGO = { items, porBarras, subs: j.subs };
+    return CATALOGO;
+  }).catch(() => { catalogoPromesa = null; return null; });
+  return catalogoPromesa;
+}
+
+function nombreCatalogo(it) {
+  const marca = it.marca && !normBusqueda(it.nombre).includes(normBusqueda(it.marca)) ? " — " + it.marca : "";
+  return it.nombre + (it.pres ? " " + it.pres : "") + marca;
+}
+
+function abrirCatalogo() {
+  document.getElementById("catalogoOverlay").classList.add("open");
+  document.getElementById("catLista").innerHTML = '<div class="empty">Cargando catálogo…</div>';
+  cargarCatalogo().then(cat => {
+    if (!cat) {
+      document.getElementById("catLista").innerHTML = '<div class="empty">No se encontró catalogo.json. Súbelo al repositorio junto al index.html.</div>';
+      return;
+    }
+    const sel = document.getElementById("catSub");
+    if (!sel.options.length) {
+      sel.innerHTML = '<option value="">Todas las categorías</option>' + cat.subs.map(s => '<option value="' + escapeHtml(s) + '">' + escapeHtml(s) + '</option>').join("");
+    }
+    renderCatalogo();
+    setTimeout(() => document.getElementById("catBuscar").focus(), 80);
+  });
+}
+
+function cerrarCatalogo() {
+  document.getElementById("catalogoOverlay").classList.remove("open");
+}
+
+function renderCatalogo() {
+  const cat = CATALOGO;
+  if (!cat) return;
+  const q = normBusqueda(document.getElementById("catBuscar").value.trim());
+  const sub = document.getElementById("catSub").value;
+  const info = document.getElementById("catInfo");
+  const cont = document.getElementById("catLista");
+  if (!q && !sub) {
+    info.textContent = cat.items.length + " productos. Escribe o escanea para buscar.";
+    cont.innerHTML = '<div class="empty">Busca por nombre, marca o código de barras</div>';
+    return;
+  }
+  const esCodigo = /^\d{4,}$/.test(q);
+  const palabras = q ? q.split(/\s+/) : [];
+  const res = cat.items.filter(it =>
+    (!sub || it.sub === sub) &&
+    (!q || (esCodigo ? it.barras.includes(q) : palabras.every(w => it.key.includes(w))))
+  );
+  info.textContent = res.length + " resultado" + (res.length === 1 ? "" : "s") + (res.length > 40 ? " (mostrando 40, afina la búsqueda)" : "");
+  if (!res.length) { cont.innerHTML = '<div class="empty">Sin resultados en el catálogo</div>'; return; }
+  const enInv = new Set(state.productos.map(p => p.barras).filter(Boolean));
+  cont.innerHTML = res.slice(0, 40).map(it => `
+    <div class="prod">
+      <div class="info">
+        <div class="name">${escapeHtml(nombreCatalogo(it))}</div>
+        <div class="meta">${escapeHtml(it.sub)} · ${escapeHtml(it.barras)}</div>
+      </div>
+      ${enInv.has(it.barras)
+        ? '<span class="badge badge-aba">✓ En tu inventario</span>'
+        : `<button class="btn btn-secondary btn-sm" onclick="catAgregar('${it.barras}')">➕ Agregar</button>`}
+    </div>`).join("");
+}
+
+function catAgregar(barras) {
+  const it = CATALOGO && CATALOGO.porBarras[barras];
+  if (!it) return;
+  cerrarCatalogo();
+  irADarDeAlta(it.barras, nombreCatalogo(it), it.cat);
+}
+
+document.getElementById("catBuscar").addEventListener("input", renderCatalogo);
+document.getElementById("catSub").addEventListener("change", renderCatalogo);
 
 /* ---------- Favoritos en Vender ---------- */
 function productosFavoritos() {
